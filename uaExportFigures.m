@@ -9,7 +9,7 @@ lambda1range = eta1range/sqrt(T);
 
 %% Separate plot
 
-for par=1:numPar
+for par=1:numParams
     if plotQuietly ~= 1
         % Plot
         p = figure('Renderer', 'painters', 'Position', [50 50 plotW plotH]);
@@ -17,9 +17,9 @@ for par=1:numPar
         p = figure('visible','off', 'Renderer', 'painters', 'Position', [50 50 plotW plotH]);% Do not plot
     end
 
-    for nIter=1:Nlen
+    for nIter=1:numN
        
-       subplot(1, Nlen, nIter)
+       subplot(1, numN, nIter)
        v = get(gca,'Position');
        set(gca,'Position',[v(1) v(2)*1.5 v(3:4)])
     
@@ -59,9 +59,9 @@ end
 %% Plot 1
 figure 
 
-for par=1:numPar
-    for nIter=1:Nlen
-       subplot(numPar, Nlen, nIter+Nlen*(par-1))
+for par=1:numParams
+    for nIter=1:numN
+       subplot(numParams, numN, nIter+numN*(par-1))
        indRef = mseIndividual(par, :);
 
        plot(eta1range, msePlugInFixed(par ,: ,nIter)./indRef)

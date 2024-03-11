@@ -3,19 +3,26 @@
 
 
 % Set range for parameter to be explored
-% eta1range = 0:0.03:0.99;
-% eta1range = 0:0.03*sqrt(T):sqrt(T)*0.99;
-eta1range = 0:0.03*sqrt(T):sqrt(T)*0.5;
-
-endOfRange = length(eta1range);
+lambda1range = 0:0.06:0.99;
+endOfRange = length(lambda1range);
 
 
 % Obtain lengths
 N = max(Nvalues);
 Nlen = length(Nvalues);
 numPar = length(mu); % obtain number of parameters used
-meanCoef = [lambdaMean; meanBeta];
+
 % Draw coefficients and variances
+meanCoef = [lambdaMean; meanBeta];
+if localAsy==1 % Local asymptotics
+    [~, thetaSample, sigmaSq] = uaDrawCoefficients(N, T, ...
+                    meanCoef, varianceBeta, varNoiseVar,  seedCoefficients);
+    
+else % Fixed parameter asymptotics, for use with large T
+    [thetaSample,~ , sigmaSq] = uaDrawCoefficients(N, 1, ... 
+                   meanCoef, varianceBeta, varNoiseVar,  seedCoefficients);  
+end
+
 
 
 
@@ -23,7 +30,8 @@ meanCoef = [lambdaMean; meanBeta];
 
 % Main loop: loop through parameter vector, draw multiple samples for each
 % value
- 
+
+thetaLoop = thetaSample;
 
 % Create MSE arrays
 uaMSEarrays
@@ -31,33 +39,21 @@ for i=1:endOfRange
     
    % Change coordinate and obtain deviations
 %    thetaLoop(1, 1) =    meanCoef(1)+lambda1range(i)/sqrt(T);
-
+   thetaLoop(1, 1) =    meanCoef(1)+lambda1range(i);
+   etaTrueLoop = sqrt(T)*(thetaLoop - repmat(meanCoef, 1, N)); % obtain deviations from the mean
+   % Obtain true values of variance
+   V = uaTrueAsymptoticVariance(thetaSample(1,:), thetaSample(2,:),sigmaSq, N,1);    % compute population-fixed variances
+   
    % Recreate temporary variance vectors
    uaLoopArrays
    
    % Inner loop: drawing samples
     parfor j=1:numReplications
         
-        if localAsy==1 % Local asymptotics
-            [~, thetaSample, sigmaSq] = uaDrawCoefficients(N, T, ...
-                meanCoef, varianceBeta, varNoiseVar,  j);
-            
-        else % Fixed parameter asymptotics, for use with large T
-            [thetaSample,~ , sigmaSq] = uaDrawCoefficients(N, 1, ...
-                meanCoef, varianceBeta, varNoiseVar,  j);
-        end
-
-        a =    meanCoef(1)+eta1range(i)/sqrt(T);
-        thetaLoop = thetaSample;
-        thetaLoop(1, 1)= a;
-        etaTrueLoop = sqrt(T)*(thetaLoop - repmat(meanCoef, 1, N)); % obtain deviations from the mean
-        % Obtain true values of variance
-        V = uaTrueAsymptoticVariance(thetaSample(1,:), thetaSample(2,:),sigmaSq, N,1);    % compute population-fixed variances
-        
         % Draw data, estimate coefficients and variances
         [y, x, u] = uaSimulateData(thetaLoop, sigmaSq, varianceX,T, j); % draw data
         thetaHat = linearStaticEstimators(y, x);% estimate coefficients
-        Vest = T*linearDynamicVarianceEstimator(y, x, thetaHat); % estimate variance
+        Vest = linearDynamicVarianceEstimator(y, x, thetaHat); % estimate variance
         etaEst = sqrt(T)*(thetaHat - repmat(mean(thetaHat,2),1, N));
         
 
@@ -104,9 +100,28 @@ for i=1:endOfRange
     uaMSEloop
 end
 
+%% Plot 1
+figure 
 
-fileSaveName =   "Outputs/"+num2str(numReplications)+ "etaRange"+...
-        num2str(min(eta1range))+ "-" + num2str(ceil(max(eta1range)))+ "N"+...
-        num2str(Nvalues(end))+"T"+num2str(T)+".mat";
-    
-save(fileSaveName)
+for par=1:numPar
+    for nIter=1:Nlen
+       subplot(numPar, Nlen, nIter+Nlen*(par-1))
+       indRef = mseIndividual(par, :);
+
+       plot(lambda1range, msePlugInFixed(par ,: ,nIter)./indRef)
+       hold on
+       plot(lambda1range, msePlugInLargeRandom1(par ,: ,nIter)./indRef)
+       plot(lambda1range, msePlugInLargeRandom2(par ,: ,nIter)./indRef)
+       
+       plot(lambda1range, mseAIC(par ,: ,nIter)./indRef) 
+       plot(lambda1range, mseMMA(par ,: ,nIter)./indRef) 
+       plot(lambda1range, mseMG(par ,: ,nIter)./indRef) 
+       ylim([0.5, 1.3])
+       legend('P: fixed', 'P: large 1', 'P: large2', 'AIC','MMA','MG', 'Location', 'northeast')
+       if nIter==2
+           title({des{par}, "N="+ Nvalues(nIter)})
+       else
+           title("N="+ Nvalues(nIter))
+       end
+    end
+end

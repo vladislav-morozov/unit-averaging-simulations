@@ -1,127 +1,164 @@
+%% Simulation auxiliary computations
+% Obtain
 
 
+
+T=valuesT;
 
 
 % Set range for parameter to be explored
-lambda1range = 0:0.06:0.99;
-endOfRange = length(lambda1range);
+% eta1range = 0:0.03:0.99;
+eta1range = 0:0.03*sqrt(T):sqrt(T)*0.99;
+% eta1range = 0:0.03*sqrt(T):sqrt(T)*0.5;
+
+etaRangeLen = length(eta1range);
 
 
 % Obtain lengths
-N = max(Nvalues);
-Nlen = length(Nvalues);
-numPar = length(mu); % obtain number of parameters used
-
-% Draw coefficients and variances
+maxN = max(valuesN);
+numN = length(valuesN);
+numParams = length(mu); % obtain number of parameters used
 meanCoef = [lambdaMean; meanBeta];
-if localAsy==1 % Local asymptotics
-    [~, thetaSample, sigmaSq] = uaDrawCoefficients(N, T, ...
-                    meanCoef, varianceBeta, varNoiseVar,  seedCoefficients);
-    
-else % Fixed parameter asymptotics, for use with large T
-    [thetaSample,~ , sigmaSq] = uaDrawCoefficients(N, 1, ... 
-                   meanCoef, varianceBeta, varNoiseVar,  seedCoefficients);  
-end
+% Draw coefficients and variances
 
 
 
 
- 
 
-% Main loop: loop through parameter vector, draw multiple samples for each
+%% Main Loop
+% Loop through parameter vector, draw multiple samples for each
 % value
 
-thetaLoop = thetaSample;
 
 % Create MSE arrays
 uaMSEarrays
-for i=1:endOfRange
+
+% Main loop: loop through the range of eta1
+for i=1:etaRangeLen
     
-   % Change coordinate and obtain deviations
-%    thetaLoop(1, 1) =    meanCoef(1)+lambda1range(i)/sqrt(T);
-   thetaLoop(1, 1) =    meanCoef(1)+lambda1range(i);
-   etaTrueLoop = sqrt(T)*(thetaLoop - repmat(meanCoef, 1, N)); % obtain deviations from the mean
-   % Obtain true values of variance
-   V = uaTrueAsymptoticVariance(thetaSample(1,:), thetaSample(2,:),sigmaSq, N,1);    % compute population-fixed variances
-   
-   % Recreate temporary variance vectors
-   uaLoopArrays
-   
-   % Inner loop: drawing samples
+    % Change coordinate and obtain deviations
+    %    thetaLoop(1, 1) =    meanCoef(1)+lambda1range(i)/sqrt(T);
+    
+    % Recreate temporary variance vectors
+    uaLoopArrays
+    
+    % Inner loop: drawing samples
     parfor j=1:numReplications
+        
+        %%%%%%%%%%%%%%%%%%%%%%%
+        %%% Data Generation %%%
+        %%%%%%%%%%%%%%%%%%%%%%%
+        
+        if localAsy==1 % Local asymptotics
+            [~, thetaSample, sigmaSq] = uaDrawCoefficients(maxN, T, ...
+                meanCoef, varianceBeta, varNoiseVar,  j);
+            
+        else % Fixed parameter asymptotics, for use with large T
+            [thetaSample,~ , sigmaSq] = uaDrawCoefficients(maxN, 1, ...
+                meanCoef, varianceBeta, varNoiseVar,  j);
+        end
+        
+        a =    meanCoef(1)+eta1range(i)/sqrt(T);
+        thetaLoop = thetaSample;
+        thetaLoop(1, 1)= a;
+        etaTrueLoop = sqrt(T)*(thetaLoop - repmat(meanCoef, 1, maxN)); % obtain deviations from the mean
+        % Obtain true values of variance
+        V = uaTrueAsymptoticVariance(thetaSample(1,:), thetaSample(2,:),sigmaSq, maxN,1);    % compute population-fixed variances
         
         % Draw data, estimate coefficients and variances
         [y, x, u] = uaSimulateData(thetaLoop, sigmaSq, varianceX,T, j); % draw data
-        thetaHat = linearStaticEstimators(y, x);% estimate coefficients
-        Vest = linearDynamicVarianceEstimator(y, x, thetaHat); % estimate variance
-        etaEst = sqrt(T)*(thetaHat - repmat(mean(thetaHat,2),1, N));
         
-
-        % Loop over parameters
-        for par=1:numPar
-            % Gradient, slice out of the supplied array of funcitons
-            d0  = D{par}(thetaLoop, x, y); % Gradient describes which parameter is estimated
-            d1  = D{par}(thetaHat, x, y); % No estimation needed in this case
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%% Individual Estimation %%%
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        
+        % Estimate coefficients
+        thetaHat = linearStaticEstimators(y, x);%
+        % Estimate variance
+        Vest = T*linearDynamicVarianceEstimator(y, x, thetaHat);
+        % Form eta estimators
+        etaEst = sqrt(T)*(thetaHat - repmat(mean(thetaHat,2),1, maxN));
+        
+        % IMPLEMENTATION NOTE:
+        % Vest holds asymptotic variances. Accordingly, we multiply etaEst
+        % by sqrt(T). This approach explicitly agrees with the notation in
+        % the paper. However, we can drop multiplication by T without
+        % changing the result
+        
+        
+        %%%%%%%%%%%%%%%%%%%%%%
+        %%% Unit Averaging %%%
+        %%%%%%%%%%%%%%%%%%%%%%
+        
+        % Loop over parameters of interest
+        for parID=1:numParams
             
-            % Target value
-            targetValue = mu{par}(thetaLoop(:, 1), x(:, 1,:), y(:, 1)); % set target value
-            unitEst = mu{par}(thetaHat, x, y);
+            % Compute the gradient of mu
+            % True gradient (for infeasible weights)
+            d0  = D{parID}(thetaLoop, x, y);
+            % Estimated gradient (for feasible weights)
+            d1  = D{parID}(thetaHat, x, y);
+            
+            % True target parameter value
+            targetValue = mu{parID}(thetaLoop(:, 1), x(:, 1,:), y(:, 1));
+            
+            % Individual estimates of parameter of interest
+            unitEst = mu{parID}(thetaHat, x, y);
+            
+            % Fixed-N weights and large-N weights
+            [errInLoopPlugInFixed(parID, j,:), ...
+                errInLoopPlugInLargeRandom1(parID, j,:),...
+                errInLoopPlugInLargeSmallBias1(parID, j,:), ...
+                errInLoopPlugInLargeLargeBias1(parID, j, :)] = ...
+                    uaEstimationErrorInfeasibleWeights(etaEst, V, d1, ...
+                     i0_1, valuesN, targetValue, unitEst); 
+            [~, ...
+                errInLoopPlugInLargeRandom2(parID, j,:),...
+                errInLoopPlugInLargeSmallBias2(parID, j,:),...
+                errInLoopPlugInLargeSmallBias2(parID, j, :)] = ...
+                    uaEstimationErrorInfeasibleWeights(etaEst, V, d1, ...
+                    i0_2, valuesN, targetValue, unitEst);
+            
             
             % Infeasible weights: using the infeasible psi matrix
-            [errInLoopInfeasiblePsiFixed(par, j,:), errInLoopInfeasiblePsiLargeRandom1(par, j,:),...
-                errInLoopInfeasiblePsiLargeSmallBias1(par, j,:), errInLoopInfeasiblePsiLargeLargeBias1(par, j, :)] =...
-                uaEstimationErrorInfeasibleWeights(etaTrueLoop, V, d0, i0_1, Nvalues, targetValue, unitEst); %#ok<*SAGROW>
-            [~, errInLoopInfeasiblePsiLargeRandom2(par, j,:),...
-                errInLoopInfeasiblePsiLargeSmallBias2(par, j,:), errInLoopInfeasiblePsiLargeSmallBias2(par, j, :)] =...
-                uaEstimationErrorInfeasibleWeights(etaTrueLoop, V, d0, i0_2, Nvalues, targetValue, unitEst);
-
-            % Feasible plug-in weights
-            [errInLoopPlugInFixed(par, j,:), errInLoopPlugInLargeRandom1(par, j,:),...
-                errInLoopPlugInLargeSmallBias1(par, j,:), errInLoopPlugInLargeLargeBias1(par, j, :)] =...
-                uaEstimationErrorInfeasibleWeights(etaEst, V, d1, i0_1, Nvalues, targetValue, unitEst); %#ok<*SAGROW>
-            [~, errInLoopPlugInLargeRandom2(par, j,:),...
-                errInLoopPlugInLargeSmallBias2(par, j,:), errInLoopPlugInLargeSmallBias2(par, j, :)] =...
-                uaEstimationErrorInfeasibleWeights(etaEst, V, d1, i0_2, Nvalues, targetValue, unitEst);
-
-            % AIC, MMA weights
-            [errInLoopAIC(par, j,:), errInLoopMMA(par, j,:)] =...
-                 uaEstimationErrorAICMMAWWeights(thetaHat, y, x, Nvalues, targetValue, unitEst); %#ok<*SAGROW>
+            % Observe that the function receives true etas, variance and
+            % true population gradient
+            % These infeasible weights can be used to check the sanity of
+            % the approximation to the MSE derived to the paper. The
+            % optimized MSE returned by theses weights should also be no
+            % worse than that of the individual estimator
+            [errInLoopInfeasiblePsiFixed(parID, j,:), ...
+                errInLoopInfeasiblePsiLargeRandom1(parID, j,:),...
+                errInLoopInfeasiblePsiLargeSmallBias1(parID, j,:), ...
+                errInLoopInfeasiblePsiLargeLargeBias1(parID, j, :)] =...
+                    uaEstimationErrorInfeasibleWeights(etaTrueLoop, V, d0,...
+                        i0_1, valuesN, targetValue, unitEst);
             
-            % Individual 
-            errInLoopIndividual(par, j) = unitEst(1)-targetValue;    
-
+            [~, errInLoopInfeasiblePsiLargeRandom2(parID, j,:),...
+                errInLoopInfeasiblePsiLargeSmallBias2(parID, j,:), errInLoopInfeasiblePsiLargeSmallBias2(parID, j, :)] =...
+                uaEstimationErrorInfeasibleWeights(etaTrueLoop, V, d0, i0_2, valuesN, targetValue, unitEst);
+            
+            % AIC, MMA weights
+            [errInLoopAIC(parID, j,:), errInLoopMMA(parID, j,:)] =...
+                uaEstimationErrorAICMMAWWeights(thetaHat, y, x, valuesN, targetValue, unitEst); %#ok<*SAGROW>
+            
+            % Individual
+            errInLoopIndividual(parID, j) = unitEst(1)-targetValue;
+            
             % Mean group
-            errInLoopMG(par, j,:) = uaEstimationErrorMeanGroup(Nvalues, targetValue,unitEst);
- 
-          
+            errInLoopMG(parID, j,:) = uaEstimationErrorMeanGroup(valuesN, targetValue,unitEst);
+            
+            
         end
         [j, i]
     end
+    
     uaMSEloop
 end
 
-%% Plot 1
-figure 
 
-for par=1:numPar
-    for nIter=1:Nlen
-       subplot(numPar, Nlen, nIter+Nlen*(par-1))
-       indRef = mseIndividual(par, :);
+fileSaveName =   "Outputs/"+num2str(numReplications)+ "etaRange"+...
+    num2str(min(eta1range))+ "-" + num2str(ceil(max(eta1range)))+ "N"+...
+    num2str(valuesN(end))+"T"+num2str(T)+".mat";
 
-       plot(lambda1range, msePlugInFixed(par ,: ,nIter)./indRef)
-       hold on
-       plot(lambda1range, msePlugInLargeRandom1(par ,: ,nIter)./indRef)
-       plot(lambda1range, msePlugInLargeRandom2(par ,: ,nIter)./indRef)
-       
-       plot(lambda1range, mseAIC(par ,: ,nIter)./indRef) 
-       plot(lambda1range, mseMMA(par ,: ,nIter)./indRef) 
-       plot(lambda1range, mseMG(par ,: ,nIter)./indRef) 
-       ylim([0.5, 1.3])
-       legend('P: fixed', 'P: large 1', 'P: large2', 'AIC','MMA','MG', 'Location', 'northeast')
-       if nIter==2
-           title({des{par}, "N="+ Nvalues(nIter)})
-       else
-           title("N="+ Nvalues(nIter))
-       end
-    end
-end
+save(fileSaveName)
