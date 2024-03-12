@@ -1,60 +1,81 @@
-function Q = uaObjectiveMatrix(est_coefs, est_covars, gradient_estimate_target, target_idx, unrestricted_bool)
-% Builds the objective matrix for unit averaging. Accommodates both
-% finite-N and large-N approximations.
-% IMPORTANT: in contrast to the paper, the estimators and the covariances are
-% not multiplied by T. One should use directly use the covariances returned
-% by the estimation algorithm
+function Q = ...
+    uaObjectiveMatrix(estCoefs, estCovars, gradientEstimateTarget, targetIdx, unrestrictedBool)
+% uaObjectiveMatrix Builds the objective matrix for unit averaging. 
+% Accommodates both finite-N and large-N approximations with the
+% unrestrictedBool argument
 %
 % Args:
-%     unrestricted_bool: None, boolean array or vector with dimension
-%                        matching est_coefs. True means the unit is
+%     estCoefs -- kxN matrix, columns index different units
+%     estCovars -- kxkxN matrix, third index indices units
+%     targetIdx -- positive integer <= N, id of the target unit
+%     gradientEstimateTarget -- k-vector; gradient of the target parameter
+%                               with respect to thetas, evaluate at the
+%                               target unit
+%     unrestricted_bool: (optional) empty or Boolean vector with dimension
+%                        matching estCoefs. True means the unit is
 %                        unrestricted. If None, all units are unrestricted
+%
+% Returns:
+%     Q -- matrix describing the MSE minimization problem
 
-if nargin < 5 || isempty(unrestricted_bool)
-    unrestricted_bool = true(size(est_coefs));
+ 
+% If no vector of restricted units is supplied, assume fixed-N behavior
+if nargin < 5 || isempty(unrestrictedBool)
+    unrestrictedBool = true(size(estCoefs, 2), 1);
 end
 
-% Compute the matrix on unrestricted units
-unrstrct_coefs = est_coefs(unrestricted_bool);
-unrstrct_covar = est_covars(unrestricted_bool);
+% Obtain number of unrestricted units
+numUnrestr = sum(unrestrictedBool);
 
-Psi = zeros(length(unrstrct_coefs), length(unrstrct_coefs));
+% Extract unrestricted coefficients and covariates
+unrstrctCoefs = estCoefs(:, unrestrictedBool);
+unrstrctCovar = estCovars(:, :, unrestrictedBool);
+targetCoefEst = estCoefs(:, targetIdx);
 
-for i = 1:length(unrstrct_coefs)
-    for j = 1:length(unrstrct_coefs)
+% Allocate Psi matrix
+Psi = nan(numUnrestr, numUnrestr);
+
+% Fill out the Psi matrix
+for rowID = 1:numUnrestr
+    for colID = 1:numUnrestr
         
         % Difference between estimates
-        coef_dif_i = unrstrct_coefs(i) - est_coefs(target_idx);
-        coef_dif_j = unrstrct_coefs(j) - est_coefs(target_idx);
-        psi_ij = coef_dif_i * coef_dif_j';
+        coefDifRow = unrstrctCoefs(:, rowID) - targetCoefEst;
+        coefDifCol = unrstrctCoefs(:, colID) - targetCoefEst;
+        psiRowCol = coefDifRow * coefDifCol';
+        
         % add covariance when appropriate
-        if i == j
-            psi_ij = psi_ij + unrstrct_covar(i);
+        if rowID == colID
+            psiRowCol = psiRowCol + squeeze(unrstrctCovar(:, :, rowID));
         end
         % Multiply by gradient
-        psi_ij = gradient_estimate_target * psi_ij * gradient_estimate_target';
+        psiRowCol = ...
+            gradientEstimateTarget'*psiRowCol*gradientEstimateTarget;
         
         % Set the corresponding element
-        Psi(i, j) = psi_ij;
+        Psi(rowID, colID) = psiRowCol;
     end
 end
 
 % If in large-N regime, add the outer row and column of restricted units
-if sum(unrestricted_bool) < length(est_coefs)
-    Q = zeros(length(unrstrct_coefs) + 1, length(unrstrct_coefs) + 1);
+if numUnrestr < size(estCoefs, 2)
+    % Allocate Q and b
+    Q = nan(numUnrestr + 1, numUnrestr + 1);
+    b = nan(numUnrestr, 1);
+    
+    % Insert Psi ino Q
     Q(1:end-1, 1:end-1) = Psi;
-    b = zeros(length(unrstrct_coefs), 1);
     
     % Fill out the elements of the b vector
-    mg = mean(est_coefs);
-    for i = 1:length(b)
-        b_i = (unrstrct_coefs(i) - est_coefs(target_idx)) * (est_coefs(target_idx) - mg)';
-        Q(i, end) = -gradient_estimate_target * b_i * gradient_estimate_target';
-        Q(end, i) = Q(i, end);
+    mg = mean(estCoefs, 2);
+    for rowID = 1:length(b)
+        bRow = (unrstrctCoefs(:, rowID) - targetCoefEst) * (targetCoefEst - mg)';
+        Q(rowID, end) = -gradientEstimateTarget' * bRow * gradientEstimateTarget;
+        Q(end, rowID) = Q(rowID, end);
     end
     
     % Insert the last element
-    Q(end, end) = (gradient_estimate_target * (est_coefs(target_idx) - mg))^2;
+    Q(end, end) = (gradientEstimateTarget' * (targetCoefEst - mg))^2;
     
 else
     Q = Psi;
