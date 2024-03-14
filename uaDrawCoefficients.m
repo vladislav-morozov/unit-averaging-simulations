@@ -6,7 +6,6 @@ function [theta, thetaScaled, sigmaSq] = ...
     % \beta normal; variance of u_{it} exponential with parameter lambda
     
     
-    
     % Draw coefficients independently
     rng(seedCoefficients,'philox')
     

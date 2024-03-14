@@ -13,13 +13,13 @@ function [betaMatrix, estVarianceArray, estVarianceUVector] = ...
 % Outputs: 1. betaMatrix -- kxN matrix of OLS estimates. jth column
 %                           contains the OLS regression coefficients of the
 %                           jth column of y on the jth columns of x
-%          2. estVarianceArray -- kxkxN array, where the third axis indexes
-%                                 cross-sectional units. The (j, j)th slice
-%                                 across the third dimension are the
-%                                 estimated covariance matrix of
-%                                 betaMatrix(:, j)
+%          2. estVarianceArray -- N-cell array, where the cells index
+%                                 cross-sectional units. The jth entry
+%                                 containts the estimated covariance matrix 
+%                                 of betaMatrix(:, j)
 %          3. estVarianceUVector -- N-vector. jth component estimates the
 %                                   variance of u_{jt}
+
 
 % Use all data if estimationWindow is not supplied. 
 if nargin<3
@@ -32,7 +32,7 @@ end
 % Allocate array for coefficient estimates
 betaMatrix = nan(k, N);
 % Allocate variance array
-estVarianceArray = nan(k, k, N);
+estVarianceArray = cell(N);
 % Allocate auxiliary array for variances of u
 estVarianceUVector = nan(N,1);
 
@@ -50,7 +50,7 @@ for i=1:N
     errorsVectorI = yInd-xInd*betaMatrix(:,i);
     estVarianceUVector(i) = ...
         errorsVectorI'*errorsVectorI/(estimationWindow-2);
-    estVarianceArray(:, :, i)= (xInd'*xInd)\eye(k)*estVarianceUVector(i) ;  
+    estVarianceArray{i}= (xInd'*xInd)\eye(k)*estVarianceUVector(i) ;  
 end
 
 end

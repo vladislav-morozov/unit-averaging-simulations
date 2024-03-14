@@ -31,6 +31,9 @@ Q = uaObjectiveMatrix(estCoefs, estCovars, gradientEstimateTarget, ...
     targetID, unrestrictedBool);
 numCoords = size(Q, 1);
 
+% Symmetrize Q to prevent the quadprog warning
+Q = (Q+Q')/2;
+
 % Minimize
 options = optimoptions('quadprog', 'Display', 'none');
 xOpt = quadprog(Q, zeros(numCoords,1), [], [], ...
