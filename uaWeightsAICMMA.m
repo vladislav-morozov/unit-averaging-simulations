@@ -22,9 +22,10 @@ for i=1:k
     sigmaHatSq(i) = errorsVectorI'*errorsVectorI/(T-2);
     
     errorsVector1 = y(1:end,1)-H1*individualEstimators(:,i); 
-    ll(i) = errorsVector1'*errorsVector1/(sigmaHatSq(i)*T);
-%     ll(i) = -log(sigmaHatSq(i))/2 +1/T*(errorsVector1'*errorsVector1)/(2*sigmaHatSq(i));
-%     ll(i) = 1/(4*T)*(errorsVector1'*errorsVector1);
+    % Compute normal log-likelihood
+    ll(i) = -log(sigmaHatSq(i))/2 + ...
+        1/T*(errorsVector1'*errorsVector1)/(2*sigmaHatSq(i));
+    ll(i) = ll(i)/4*pi;
 end
 
 
