@@ -1,12 +1,13 @@
 function [errorStruct, weightStruct, unitsUnrestrStruct] = ...
     uaSampleAveraging(y, covars,...
-        thetaHat,thetaTrue,...
-        estVarianceArray, ...
-        paramArray, ...
-        preparedMethodsArray)
+    thetaHat,thetaTrue,...
+    estVarianceArray, ...
+    paramArray, ...
+    preparedMethodsArray, ...
+    averagingMode)
 % uaSampleAveraging Performs unit averaging and computes error. Applies
 % averaging to all units that appear in the data, all parameters in
-% paramArray. Applies all averaging methods specified by 
+% paramArray. Applies all averaging methods specified by
 % preparedMethodsArray
 %
 % Inputs: 1. y -- TxN matrix of outcome variables, columns index units
@@ -19,29 +20,36 @@ function [errorStruct, weightStruct, unitsUnrestrStruct] = ...
 %         5. estVarianceArray -- N-cell array where elements are covariance
 %            matrices or kxkxN matrix, third index indices units
 %         6. paramArray -- cell array of parameters. Each parameter must be
-%               described by a struct that contains at least the .mu, 
+%               described by a struct that contains at least the .mu,
 %               .gradient, and the .shortName fields
 %         7. preparedMethodsArray -- cell array of averaging approaches.
-%            Each approach is described by a struct that contains at least 
+%            Each approach is described by a struct that contains at least
 %            the .shortName and the .unrestrictedArray fields
-% 
+%         8. averagingMode -- 'all' or 'firstOnly'. Determines if all units
+%            are to serve as targets or only the first one 
+%
 % Returns:
 %         1. errorStruct -- struct with indexing structure .paramName ->
-%            .approachName -> N-vector of errors. jth entry of vector is 
+%            .approachName -> N-vector of errors. jth entry of vector is
 %            error of estimating paramName with approach for unit j
 %         2. weightStruct -- struct with indexing structure .paramName ->
 %            .approachName -> NxN matrix of weights. jth row of matrix
 %            describes the weights when estimating paramName with
 %            approachName for unit j.
-%         3. unitsUnrestrStruct -- struct with indexing structure 
-%            .paramName -> .approachName -> NxN matrix of Booleans. jth 
+%         3. unitsUnrestrStruct -- struct with indexing structure
+%            .paramName -> .approachName -> NxN matrix of Booleans. jth
 %            row of matrix describes units unrestricted when estimating
 %            paramName with approachName for unit j
 
 % Obtain dimensions
 numParams = length(paramArray);
 numApproaches = length(preparedMethodsArray);
-numTargets = size(thetaHat, 2);
+if averagingMode == "all"
+    numTargets = size(thetaHat, 2);
+else
+    numTargets = 1;
+end
+numUnits = size(thetaHat, 2);
 
 % Preallocate suitable structs
 for parID = 1:numParams
@@ -54,7 +62,7 @@ for parID = 1:numParams
         % Insert suitable nan arrays
         errorStruct.(paramName).(approachShortName) = nan(numTargets, 1);
         weightStruct.(paramName).(approachShortName) = ...
-            nan(numTargets, numTargets);
+            nan(numTargets, numUnits);
     end
 end
 
@@ -90,7 +98,7 @@ for parID = 1:numParams
             
             % Create default vector of unrestricted units
             unrestrictedBooltargetId = true(numTargets, 1);
-         
+            
             % if approach is optimal, extract its restricted component and
             % modify the unrestrictedBooltargetId vector
             if isfield(approach, "unrestrictedArray")
@@ -108,7 +116,7 @@ for parID = 1:numParams
                 unitsUnrestrStruct.(paramName).(approachShortName)(targetID, :) = ...
                     unrestrictedBooltargetId';
             end
-
+            
             
             % Compute weights of the current approach
             weightsCurrent = approach.weightFunction(...
@@ -122,11 +130,11 @@ for parID = 1:numParams
             
             % Insert the weights into the weights array
             weightStruct.(paramName).(approachShortName)(targetID, :) = ...
-               weightsCurrent';
-           % Insert the error into the error array
-           errorStruct.(paramName).(approachShortName)(targetID) = ...
-               errorCurrent;
+                weightsCurrent';
+            % Insert the error into the error array
+            errorStruct.(paramName).(approachShortName)(targetID) = ...
+                errorCurrent;
         end
-    end  
+    end
 end
 end

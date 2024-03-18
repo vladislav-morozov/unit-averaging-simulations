@@ -3,7 +3,7 @@
 % Authors: Christian Brownlees, Vladislav Morozov
 % Contact: Vladislav Morozov (vladislav.morozov (at) barcelonagse.eu)
 %
-% Last modified: 2024-03-10
+% Last modified: 2024-03-17
 %
 %
 % This file runs the simulations reported in the paper and the online
@@ -24,27 +24,19 @@ plotQuietly = false;
 seedCoefficients = 1; 
 
 % Number of replications
-numReplications = 10;
+numReplications = 40;
 
 % Saving
 saveWeights = false;
-saveUnrestricted = false;
-
+saveUnrestricted = false; 
 
 %% DGP Parameters
-% Data dimensions
-valuesN= [10, 25, 50, 150, 250]; % values of N to compare, must be arranged in ascending order
-valuesT = 60 ;
+% There are several DGPs implemented. Chosen by simulationSetting
+% 
 
-% For Dynamic model: select default mean and variance parameters for
-% coefficients
-lambdaMean = 0;
-meanBeta = 1; % mean for beta coefficient
-varianceBeta = 1; % variance for beta 
-varNoiseVar = 1; % variance of heteroskedasticity
-varianceX = 1; % to match the factor
- 
-localAsy = 1;
+simulationSetting = "unimodal";
+uaSetParameters
+
 
 %% Parameters to estimate in the model
 % The model is
@@ -104,13 +96,21 @@ paramArray{4}.plotDescr = "\mu(\theta_1) = E(y_{T+1}|y_T, x_T=1)";
 paramArray{4}.saveName = "forecast";
 
 %% Averaging schemes
+%
+% NOTE: the generic optimal scheme is used as a blueprint for other optimal
+% schemes. As some large-N schemes depend on the data, these are created
+% for each given sample. The different schemes are implemented by the
+% uaAddOptimalToMethodsStruct function
 
 methodsArray{1}.weightFunction = ...
     @(y, covars, estCoefs, estCovars, gradientEstimateTarget, ...
       targetID, unrestrictedBooltargetId) ...
-            double(1:size(estCoefs, 2) == 2)';
+            double(1:size(estCoefs, 2) == targetID)';
 methodsArray{1}.shortName = 'ind';        
 methodsArray{1}.longName = 'Individual';
+methodsArray{1}.color = [46, 230, 46]/255; % bright blue
+methodsArray{1}.lineStyle = '-';
+methodsArray{1}.marker = 'none';
 
 
 methodsArray{2}.weightFunction = ...
@@ -119,7 +119,9 @@ methodsArray{2}.weightFunction = ...
             ones(size(estCoefs, 2), 1)/size(estCoefs, 2);
 methodsArray{2}.shortName = 'mg';        
 methodsArray{2}.longName = 'Mean Group';
-
+methodsArray{2}.color = [141, 111, 100]/255; % brown
+methodsArray{2}.lineStyle = '-';
+methodsArray{2}.marker = 'none';
 
 methodsArray{3}.weightFunction = ...
     @(y, covars, estCoefs, estCovars, gradientEstimateTarget, ...
@@ -127,7 +129,9 @@ methodsArray{3}.weightFunction = ...
             uaWeightsAICMMA(estCoefs, y, covars, 'aic');
 methodsArray{3}.shortName = 'aic';        
 methodsArray{3}.longName = 'AIC';
-
+methodsArray{3}.color =   [ 106, 130, 68]/255;
+methodsArray{3}.lineStyle = '-.';
+methodsArray{3}.marker = '+';
 
 methodsArray{4}.weightFunction = ...
     @(y, covars, estCoefs, estCovars, gradientEstimateTarget, ...
@@ -135,6 +139,10 @@ methodsArray{4}.weightFunction = ...
             uaWeightsAICMMA(estCoefs, y, covars, 'mma');
 methodsArray{4}.shortName = 'mma';        
 methodsArray{4}.longName = 'MMA';
+methodsArray{4}.color =   [ 55, 130, 125]/255; % greenish-teal
+methodsArray{4}.lineStyle = '-.';
+methodsArray{4}.marker = '.';
+
 
 
 methodsArray{5}.weightFunction = ...
@@ -144,12 +152,16 @@ methodsArray{5}.weightFunction = ...
                          targetID, unrestrictedBooltargetId);
 methodsArray{5}.shortName = 'opt';                   
 methodsArray{5}.longName = 'Generic Optimal'; 
-                    
+% The colors and styles should be set for individual units
+methodsArray{5}.color =   [0, 0, 0];
+methodsArray{5}.lineStyle = '--';
+methodsArray{5}.marker = 'x';
 
 %% Simulation
 % Main simulation file
-uaSimulateExp
+uaSimulate
 
 %% Export plots
 % The uaExportFigures script exports relative MSE plots 
+uaExportFigures
 % uaExportFigures

@@ -1,9 +1,15 @@
-function optimalSchemes = uaOptimalSchemes(thetaHat)
+function optimalSchemes = ...
+    uaOptimalSchemesExp2(thetaHat, averagingMode, averagingIncludeBool)
 % uaOptimalSchemes Implements the fixed-N and various large-N optimal
-% schemes. 
+% schemes. 6 approaches are implemented currently
 %
-% Inputs: thetaHat -- kxN matrix of coefficient estimates. Columns index
-%   units
+% Inputs: 1. thetaHat -- kxN matrix of coefficient estimates. Columns index
+%            units
+%         2. averagingMode -- 'all' or 'firstOnly'. Determines if all units
+%            are to serve as targets or only the first one 
+%         3. averagingIncludeBool -- boolean 6-vector. True in kth position
+%            means kth approach is returned
+
 %
 % Returns: optimalSchemes -- cell array of structs. Each struct describes a
 %   an averaging approaches. An approach is characterized by 3 fields:
@@ -12,7 +18,13 @@ function optimalSchemes = uaOptimalSchemes(thetaHat)
 %   unrestricted units for averaging the jth unit with a given scheme.
 
 
-numUnits = size(thetaHat, 2);
+if averagingMode == "all"
+    numTargets = size(thetaHat, 2);
+else
+    numTargets = 1;
+end
+
+numUnits =  size(thetaHat, 2);
 
 % Do any sample-specific large-N computations
 optimalSchemes = {};
@@ -21,52 +33,99 @@ optimalSchemes = {};
 % Fixed-N
 optimalSchemes{1}.shortName = 'unrestr';
 optimalSchemes{1}.longName = 'Fixed-N';
-for targetID = 1:numUnits
+for targetID = 1:numTargets
     optimalSchemes{1}.unrestrictedArray{targetID} = ...
         @(weightVector) true(numUnits, 1);
 end
-
-
-% Random units
-optimalSchemes{2}.shortName = 'random';
-optimalSchemes{2}.longName = 'Large-N (random 10%)';
-for targetID = 1:numUnits
-    randomBool = false(numUnits, 1);
-    randomBool(datasample(1:numUnits, ceil(0.1*numUnits))) = true;
-    randomBool(targetID) = true;
-    optimalSchemes{2}.unrestrictedArray{targetID} = ...
-        @(weightVector) randomBool;
-end
-
+optimalSchemes{1}.color =   [ 132, 1, 3]/255;  % dark red
+optimalSchemes{1}.lineStyle = '-';
+optimalSchemes{1}.marker = 'o';
 
 % Clustering coefficients
-coefClusters = kmeans(thetaHat', 4); % cluster coefs
-
-optimalSchemes{3}.shortName = 'cluster_coef';
-optimalSchemes{3}.longName = 'Large-N (clustering coefficients)';
-for targetID = 1:numUnits
+coefClusters = kmeans(thetaHat', 2); % cluster coefs
+optimalSchemes{2}.shortName = 'cluster_coef';
+optimalSchemes{2}.longName = 'Large-N (clustering coefficients)';
+for targetID = 1:numTargets
     currentCluster = coefClusters(targetID);
-    optimalSchemes{3}.unrestrictedArray{targetID} = ...
+    optimalSchemes{2}.unrestrictedArray{targetID} = ...
         @(weightVector) coefClusters == currentCluster;
 end
-
+optimalSchemes{2}.color =  [90, 30, 236]/255;  % purple
+optimalSchemes{2}.lineStyle = ':'; 
+optimalSchemes{2}.marker = '*';
 
 % Top weights of fixed-N criterion (fixed-N must also be available)
-optimalSchemes{4}.shortName = 'top';
-optimalSchemes{4}.longName = 'Large-N (top 10% unrestricted)';
-for targetID = 1:numUnits
-    optimalSchemes{4}.unrestrictedArray{targetID} = ...
+optimalSchemes{3}.shortName = 'top';
+optimalSchemes{3}.longName = 'Large-N (top 10% unrestricted)';
+for targetID = 1:numTargets
+    optimalSchemes{3}.unrestrictedArray{targetID} = ...
         @(weightVector) boolTopCoords(weightVector, targetID, 0.1);
 end
+optimalSchemes{3}.color =   [218, 1, 136]/255;  % intense pink
+optimalSchemes{3}.lineStyle = ':'; 
+optimalSchemes{3}.marker = 'x';
 
 
 % Stein-like
-optimalSchemes{5}.shortName = 'stein';
-optimalSchemes{5}.longName = 'Stein-like';
-for targetID = 1:numUnits
-    optimalSchemes{5}.unrestrictedArray{targetID} = ...
-        @(weightVector)  (1:numUnits)==targetID;
+optimalSchemes{4}.shortName = 'stein';
+optimalSchemes{4}.longName = 'Stein-like';
+for targetID = 1:numTargets
+    optimalSchemes{4}.unrestrictedArray{targetID} = ...
+        @(weightVector)  ((1:numUnits)==targetID)';
 end
+optimalSchemes{4}.color =   [179, 112, 79]/255;  % weird brown
+optimalSchemes{4}.lineStyle = ':'; 
+optimalSchemes{4}.marker = 'pentagram';
+
+
+% Random 10 units
+optimalSchemes{5}.shortName = 'random10';
+optimalSchemes{5}.longName = 'Large-N (random 10 units)';
+for targetID = 1:numTargets
+    randomBool = false(numUnits, 1);
+    randomBool(datasample(1:numUnits, min(numUnits, 10), 'Replace',false)) = true;
+    randomBool(targetID) = true;
+    optimalSchemes{5}.unrestrictedArray{targetID} = ...
+        @(weightVector) randomBool;
+end
+optimalSchemes{5}.color =   [65, 60, 174]/255;  % purplish blue
+optimalSchemes{5}.lineStyle = ':'; 
+optimalSchemes{5}.marker = '>';
+
+
+% Random 20 units
+optimalSchemes{6}.shortName = 'random20';
+optimalSchemes{6}.longName = 'Large-N (random 20 units)';
+for targetID = 1:numTargets
+    randomBool = false(numUnits, 1);
+    randomBool(datasample(1:numUnits, min(numUnits, 20), 'Replace',false)) ...
+        = true;
+    randomBool(targetID) = true;
+    optimalSchemes{6}.unrestrictedArray{targetID} = ...
+        @(weightVector) randomBool;
+end
+optimalSchemes{6}.color =   [30, 54, 236]/255;  %  blue
+optimalSchemes{6}.lineStyle = ':'; 
+optimalSchemes{6}.marker = '<';
+
+
+% Random 10%
+optimalSchemes{7}.shortName = 'random10pct';
+optimalSchemes{7}.longName = 'Large-N (random 10%)';
+for targetID = 1:numTargets
+    randomBool = false(numUnits, 1);
+    randomBool(datasample(1:numUnits, ceil(numUnits*0.1), 'Replace',false)) = true;
+    randomBool(targetID) = true;
+    optimalSchemes{7}.unrestrictedArray{targetID} = ...
+        @(weightVector) randomBool;
+end
+optimalSchemes{7}.color =   [30, 54, 236]/255;  %  blue
+optimalSchemes{7}.lineStyle = ':'; 
+optimalSchemes{7}.marker = '>';
+
+
+% Extract only the desired averaging schemes
+optimalSchemes = optimalSchemes(averagingIncludeBool);
 
 end
 

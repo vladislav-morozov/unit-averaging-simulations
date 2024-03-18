@@ -1,5 +1,5 @@
 % Infeasible
-mseInfeasibleFixed = zeros(numParamsams, etaRangeLen, numN);
+mseInfeasibleFixed = zeros(numParams, etaRangeLen, numN);
 mseInLargeRandom1 = zeros(numParams, etaRangeLen, numN);
 mseInLargeRandom2 = zeros(numParams, etaRangeLen, numN);
 mseInfeasibleLargeSmallBias1 = zeros(numParams, etaRangeLen, numN);

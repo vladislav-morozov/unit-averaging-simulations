@@ -1,164 +1,174 @@
+%
+
+% for (N, T)
+%   for candidate values of (theta_{i1}, theta_{i2})
+%       for sample
+%           draw thetas and set first unit to candidate value
+%           simulate data
+%           estimate parameters
+%           conduct averaging on first unit
+%           record errors of approaches
+%       estimate MSE value for candidate value
+%
+
 %% Simulation auxiliary computations
-% Obtain
-
-
-
-T=valuesT;
-
-
-% Set range for parameter to be explored
-% eta1range = 0:0.03:0.99;
-eta1range = 0:0.03*sqrt(T):sqrt(T)*0.99;
-% eta1range = 0:0.03*sqrt(T):sqrt(T)*0.5;
-
-etaRangeLen = length(eta1range);
-
 
 % Obtain lengths
-maxN = max(valuesN);
+numT = length(valuesT);
 numN = length(valuesN);
-numParams = length(mu); % obtain number of parameters used
-meanCoef = [lambdaMean; meanBeta];
-% Draw coefficients and variances
+numParams = length(paramArray); % obtain number of parameters used
+ 
 
+numTargetPoints = length(theta1Range);
 
-
+% Implementation
+% Loop through (samples), (N, T) pairs
+% Save three cell arrays with those indices
+% 1. trueTheta array -- hold true values
+% 2. weight array -- deeper level ->.parID -> .schemeID -> N_kx1 vector of
+% errors. jth entry corresponds to par(j)th unit being the target. Matches
+% up with the rows of the trueThetas.
+% 2. error array -- deeper level ->.parID -> .schemeID -> .weights and
+% .unrestricted. Both house N_kxN_k matrices, jth rows correspond to the
+% jth unit being the targe
+% The inloop functions return those deeper levels
 
 
 %% Main Loop
 % Loop through parameter vector, draw multiple samples for each
 % value
 
-
-% Create MSE arrays
-uaMSEarrays
-
-% Main loop: loop through the range of eta1
-for i=1:etaRangeLen
-    
-    % Change coordinate and obtain deviations
-    %    thetaLoop(1, 1) =    meanCoef(1)+lambda1range(i)/sqrt(T);
-    
-    % Recreate temporary variance vectors
-    uaLoopArrays
-    
-    % Inner loop: drawing samples
-    parfor j=1:numReplications
+mseTablesN = cell(numN, numT);
+ 
+% Loop through the different values of N
+for tID = 1:numT
+    for nID=1:numN
+        % Current sample sizes
+        N = valuesN(nID);
+        T = valuesT(tID);
         
-        %%%%%%%%%%%%%%%%%%%%%%%
-        %%% Data Generation %%%
-        %%%%%%%%%%%%%%%%%%%%%%%
-        
-        if localAsy==1 % Local asymptotics
-            [~, thetaSample, sigmaSq] = uaDrawCoefficients(maxN, T, ...
-                meanCoef, varianceBeta, varNoiseVar,  j);
+        msePointStructsArray = cell(numTargetPoints, 1);      
+        % Iterate through the target values
+        for targetValueID = 1:numTargetPoints
             
-        else % Fixed parameter asymptotics, for use with large T
-            [thetaSample,~ , sigmaSq] = uaDrawCoefficients(maxN, 1, ...
-                meanCoef, varianceBeta, varNoiseVar,  j);
+            targetValue = theta1Range(targetValueID);
+            
+            % Create arrays to fill out in the loop
+            errorsArrayTarget = cell(numReplications, 1);
+            
+            % Draw samples with current target value
+            parfor replID=1:numReplications % parfor this
+                
+                %%%%%%%%%%%%%%%%%%%%%%%
+                %%% Data Generation %%%
+                %%%%%%%%%%%%%%%%%%%%%%%
+                
+ 
+                    [thetaTrue, sigmaSq] = ...
+                        uaDrawCoefficients(...
+                            coefApproach, N, ...
+                            varNoiseVar,  replID);
+                 
+                
+                % Modify the first unit in line with the targetValue
+                thetaTrue(1, 1) = targetValue;
+                
+                % Draw data, estimate coefficients and variances
+                [y, covars, u] = ...
+                    uaSimulateData(thetaTrue, sigmaSq, varianceX, ...
+                    T, replID);
+                
+                
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %%% Individual Estimation %%%
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                
+                % Estimate coefficients and variances
+                [thetaHat, estVarianceArray] = uaOLS(y, covars);
+                
+                
+                %%%%%%%%%%%%%%%%%%%%%%
+                %%% Unit Averaging %%%
+                %%%%%%%%%%%%%%%%%%%%%%
+                
+                % Create optimal strategies for this subsamples
+                optimalSchemes = ...
+                    uaOptimalSchemes(...
+                        thetaHat, ...
+                        'firstOnly', ...
+                        averagingIncludeBool);
+                
+                % Preprocess the methods array: expand generic optimal position to
+                % use the restrictions imposed by optimalSchemes
+                preparedMethodsArray = ...
+                    uaAddOptimalToMethodsStruct(methodsArray, optimalSchemes);
+                
+                % Apply averaging
+                [errorStruct, weightStruct, unitsUnrestrStruct] = ...
+                    uaSampleAveraging(y, covars,...
+                    thetaHat,thetaTrue,...
+                    estVarianceArray, paramArray, preparedMethodsArray, 'firstOnly');
+     
+                
+                % Save weights and errors
+                errorsArrayTarget{replID} = errorStruct;
+                if saveWeights
+                    weightsArray{nID, replID} = weightStruct;
+                end
+                if saveUnrestricted
+                    unitsUnrestrArray{nID, replID} = unitsUnrestrStruct;
+                end
+                
+                
+                disp(['N=', num2str(N), ...
+                      ', T=', num2str(T), ...
+                      ', Target: ', num2str(targetValueID),...
+                      '/', num2str(numTargetPoints),...
+                      ', Replication ', num2str(replID)])
+            end
+            
+            % Compute MSE for current target value
+            msePointStructsArray{targetValueID} = ...
+                uaProcessOneValueError(errorsArrayTarget, paramArray);
+                   
+            % POSSIBLY obtain some sort of density for weights or something
         end
+        % Glue together the msePointStructsArray into a struct of tables
+        mseTablesN{nID, tID} = ...
+            usProcessMSE(msePointStructsArray, paramArray);
         
-        a =    meanCoef(1)+eta1range(i)/sqrt(T);
-        thetaLoop = thetaSample;
-        thetaLoop(1, 1)= a;
-        etaTrueLoop = sqrt(T)*(thetaLoop - repmat(meanCoef, 1, maxN)); % obtain deviations from the mean
-        % Obtain true values of variance
-        V = uaTrueAsymptoticVariance(thetaSample(1,:), thetaSample(2,:),sigmaSq, maxN,1);    % compute population-fixed variances
-        
-        % Draw data, estimate coefficients and variances
-        [y, x, u] = uaSimulateData(thetaLoop, sigmaSq, varianceX,T, j); % draw data
-        
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %%% Individual Estimation %%%
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        
-        % Estimate coefficients
-        thetaHat = linearStaticEstimators(y, x);%
-        % Estimate variance
-        Vest = T*linearDynamicVarianceEstimator(y, x, thetaHat);
-        % Form eta estimators
-        etaEst = sqrt(T)*(thetaHat - repmat(mean(thetaHat,2),1, maxN));
-        
-        % IMPLEMENTATION NOTE:
-        % Vest holds asymptotic variances. Accordingly, we multiply etaEst
-        % by sqrt(T). This approach explicitly agrees with the notation in
-        % the paper. However, we can drop multiplication by T without
-        % changing the result
-        
-        
-        %%%%%%%%%%%%%%%%%%%%%%
-        %%% Unit Averaging %%%
-        %%%%%%%%%%%%%%%%%%%%%%
-        
-        % Loop over parameters of interest
-        for parID=1:numParams
-            
-            % Compute the gradient of mu
-            % True gradient (for infeasible weights)
-            d0  = D{parID}(thetaLoop, x, y);
-            % Estimated gradient (for feasible weights)
-            d1  = D{parID}(thetaHat, x, y);
-            
-            % True target parameter value
-            targetValue = mu{parID}(thetaLoop(:, 1), x(:, 1,:), y(:, 1));
-            
-            % Individual estimates of parameter of interest
-            unitEst = mu{parID}(thetaHat, x, y);
-            
-            % Fixed-N weights and large-N weights
-            [errInLoopPlugInFixed(parID, j,:), ...
-                errInLoopPlugInLargeRandom1(parID, j,:),...
-                errInLoopPlugInLargeSmallBias1(parID, j,:), ...
-                errInLoopPlugInLargeLargeBias1(parID, j, :)] = ...
-                    uaEstimationErrorInfeasibleWeights(etaEst, V, d1, ...
-                     i0_1, valuesN, targetValue, unitEst); 
-            [~, ...
-                errInLoopPlugInLargeRandom2(parID, j,:),...
-                errInLoopPlugInLargeSmallBias2(parID, j,:),...
-                errInLoopPlugInLargeSmallBias2(parID, j, :)] = ...
-                    uaEstimationErrorInfeasibleWeights(etaEst, V, d1, ...
-                    i0_2, valuesN, targetValue, unitEst);
-            
-            
-            % Infeasible weights: using the infeasible psi matrix
-            % Observe that the function receives true etas, variance and
-            % true population gradient
-            % These infeasible weights can be used to check the sanity of
-            % the approximation to the MSE derived to the paper. The
-            % optimized MSE returned by theses weights should also be no
-            % worse than that of the individual estimator
-            [errInLoopInfeasiblePsiFixed(parID, j,:), ...
-                errInLoopInfeasiblePsiLargeRandom1(parID, j,:),...
-                errInLoopInfeasiblePsiLargeSmallBias1(parID, j,:), ...
-                errInLoopInfeasiblePsiLargeLargeBias1(parID, j, :)] =...
-                    uaEstimationErrorInfeasibleWeights(etaTrueLoop, V, d0,...
-                        i0_1, valuesN, targetValue, unitEst);
-            
-            [~, errInLoopInfeasiblePsiLargeRandom2(parID, j,:),...
-                errInLoopInfeasiblePsiLargeSmallBias2(parID, j,:), errInLoopInfeasiblePsiLargeSmallBias2(parID, j, :)] =...
-                uaEstimationErrorInfeasibleWeights(etaTrueLoop, V, d0, i0_2, valuesN, targetValue, unitEst);
-            
-            % AIC, MMA weights
-            [errInLoopAIC(parID, j,:), errInLoopMMA(parID, j,:)] =...
-                uaEstimationErrorAICMMAWWeights(thetaHat, y, x, valuesN, targetValue, unitEst); %#ok<*SAGROW>
-            
-            % Individual
-            errInLoopIndividual(parID, j) = unitEst(1)-targetValue;
-            
-            % Mean group
-            errInLoopMG(parID, j,:) = uaEstimationErrorMeanGroup(valuesN, targetValue,unitEst);
-            
-            
-        end
-        [j, i]
     end
-    
-    uaMSEloop
+end
+%%
+% Extract range of methods for plotting
+optimalSchemes = ...
+    uaOptimalSchemes(randn(2, N), 'firstOnly', averagingIncludeBool);
+methodsForPlotting = ...
+    uaAddOptimalToMethodsStruct(methodsArray, optimalSchemes);
+
+
+%% Save results
+
+titleN = "";
+for nID=1:numN
+    titleN = titleN + "-" + valuesN(nID) ;
+end
+titleT = "";
+for tID=1:numT
+    titleT = titleT + "-" + valuesT(tID);
 end
 
+fileSaveName =   "Outputs/"+...
+    simulationSetting + "/" + ...
+    "Replication-" + num2str(numReplications)+ ...
+    "N" + titleN + ...
+    "T" + titleT +...
+    "weights" + num2str(saveWeights) + ...
+    "unrestricted" + num2str(saveUnrestricted) + ...
+    ".mat";
 
-fileSaveName =   "Outputs/"+num2str(numReplications)+ "etaRange"+...
-    num2str(min(eta1range))+ "-" + num2str(ceil(max(eta1range)))+ "N"+...
-    num2str(valuesN(end))+"T"+num2str(T)+".mat";
+% fileSaveName =   "Outputs/"+num2str(numReplications)+ "etaRange"+...
+%     num2str(min(eta1range))+ "-" + num2str(ceil(max(eta1range)))+ "N"+...
+%     num2str(valuesN(end))+"T"+num2str(T)+".mat";
 
 save(fileSaveName)

@@ -30,21 +30,24 @@ meanCoef = [lambdaMean; meanBeta];
 % Loop through parameter vector, draw multiple samples for each
 % value
 
-trueThetaArray = cell(numN);
-errorsArray = cell(numN);
+trueThetaArray = cell(numN, numReplications);
+errorsArray = cell(numN, numReplications);
 if saveWeights
-    weightsArray = cell(numN);
+    weightsArray = cell(numN, numReplications);
 end
 if saveUnrestricted
-    unitsUnrestrArray = cell(numN);
+    unitsUnrestrArray = cell(numN, numReplications);
 end
+
+ 
 % Draw samples
-for replID=1:numReplications % parfor this
+parfor replID=1:numReplications % parfor this
     
     %%%%%%%%%%%%%%%%%%%%%%%
     %%% Data Generation %%%
     %%%%%%%%%%%%%%%%%%%%%%%
     
+    localAsy = 0;
     if localAsy==1 % Local asymptotics
         [~, thetaTrue, sigmaSq] = uaDrawCoefficients(maxN, T, ...
             meanCoef, varianceBeta, varNoiseVar,  replID);
@@ -87,7 +90,7 @@ for replID=1:numReplications % parfor this
         
         
         % Save thetas
-        trueThetaArray{nID}{replID} = thetaTrueSub';
+        trueThetaArray{nID, replID} = thetaTrueSub';
         
         % Create optimal strategies for this subsamples
         optimalSchemes = uaOptimalSchemes(thetaHatSub);
@@ -104,12 +107,12 @@ for replID=1:numReplications % parfor this
             estVarianceArraySub, paramArray, preparedMethodsArray);
         
         % Save weights and errors
-        errorsArray{nID}{replID} = errorStruct;
+        errorsArray{nID, replID} = errorStruct;
         if saveWeights
-            weightsArray{nID}{replID} = weightStruct;
+            weightsArray{nID, replID} = weightStruct;
         end
         if saveUnrestricted
-            unitsUnrestrArray{nID}{replID} = unitsUnrestrStruct;
+            unitsUnrestrArray{nID, replID} = unitsUnrestrStruct;
         end
         
         

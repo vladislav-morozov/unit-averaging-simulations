@@ -45,14 +45,13 @@ numNonOptimal  = length(preparedMethodsArray);
 % the corresponding restricted units
 numOptimalSchemes = length(optimalSchemes);
 for optSchemeID = 1:numOptimalSchemes
-    preparedMethodsArray{numNonOptimal+optSchemeID}.weightFunction = ...
-        optimalGeneric.weightFunction;
-    preparedMethodsArray{numNonOptimal+optSchemeID}.shortName = ...
-        optimalSchemes{optSchemeID}.shortName;
-    preparedMethodsArray{numNonOptimal+optSchemeID}.longName = ...
-        optimalSchemes{optSchemeID}.longName;
-    preparedMethodsArray{numNonOptimal+optSchemeID}.unrestrictedArray = ...
-        optimalSchemes{optSchemeID}.unrestrictedArray; 
+    % Copy the description of the new scheme into a temp struct
+    tempOptimal = optimalSchemes{optSchemeID};
+    % Add the generic weight function
+    tempOptimal.weightFunction = optimalGeneric.weightFunction;
+    % Insert into the prepared methods array
+    preparedMethodsArray{numNonOptimal+optSchemeID} = ...
+        tempOptimal;
 end
 
 end
