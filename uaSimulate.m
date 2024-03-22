@@ -39,6 +39,9 @@ numTargetPoints = length(theta1Range);
 % value
 
 mseTablesN = cell(numN, numT);
+biasTablesN = cell(numN, numT);
+varTablesN = cell(numN, numT);
+weightsTablesNT = cell(numN, numT);
  
 % Loop through the different values of N
 for tID = 1:numT
@@ -47,7 +50,10 @@ for tID = 1:numT
         N = valuesN(nID);
         T = valuesT(tID);
         
-        msePointStructsArray = cell(numTargetPoints, 1);      
+        msePointStructsArray = cell(numTargetPoints, 1);   
+        biasPointStructsArray = cell(numTargetPoints, 1);  
+        varPointStructsArray = cell(numTargetPoints, 1);  
+        weightsRegArray = cell(numTargetPoints, 1);  
         % Iterate through the target values
         for targetValueID = 1:numTargetPoints
             
@@ -55,6 +61,14 @@ for tID = 1:numT
             
             % Create arrays to fill out in the loop
             errorsArrayTarget = cell(numReplications, 1);
+            estArrayTarget = errorsArrayTarget;
+            targetParamsPoint  = errorsArrayTarget;
+            
+            if saveWeights
+                % Save sample and corresponding weights
+                thetaPointArray = errorsArrayTarget;
+                weightsArray = errorsArrayTarget;
+            end
             
             % Draw samples with current target value
             parfor replID=1:numReplications % parfor this
@@ -64,20 +78,24 @@ for tID = 1:numT
                 %%%%%%%%%%%%%%%%%%%%%%%
                 
  
-                    [thetaTrue, sigmaSq] = ...
+                [thetaTrue, sigmaSq, thetaLabels] = ...
                         uaDrawCoefficients(...
                             coefApproach, N, ...
                             varNoiseVar,  replID);
                  
                 
                 % Modify the first unit in line with the targetValue
-                thetaTrue(1, 1) = targetValue;
+                thetaTrue(1, 1) = targetValue;              
                 
                 % Draw data, estimate coefficients and variances
                 [y, covars, u] = ...
                     uaSimulateData(thetaTrue, sigmaSq, varianceX, ...
                     T, replID);
                 
+                % Compute the true values of parameters for unit 1
+                targetParamsPoint{replID} = uaComputeAllParams(...
+                    paramArray, thetaTrue(:, 1), ...
+                    covars(:, 1, :), y(:, 1));
                 
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 %%% Individual Estimation %%%
@@ -94,7 +112,7 @@ for tID = 1:numT
                 % Create optimal strategies for this subsamples
                 optimalSchemes = ...
                     uaOptimalSchemes(...
-                        thetaHat, ...
+                        thetaHat, thetaTrue, thetaLabels, ...
                         'firstOnly', ...
                         averagingIncludeBool);
                 
@@ -104,19 +122,22 @@ for tID = 1:numT
                     uaAddOptimalToMethodsStruct(methodsArray, optimalSchemes);
                 
                 % Apply averaging
-                [errorStruct, weightStruct, unitsUnrestrStruct] = ...
+                [errorStruct, estStruct, weightStruct, unitsUnrestrStruct] = ...
                     uaSampleAveraging(y, covars,...
                     thetaHat,thetaTrue,...
-                    estVarianceArray, paramArray, preparedMethodsArray, 'firstOnly');
-     
+                    estVarianceArray, paramArray, preparedMethodsArray, ...
+                    'firstOnly');
                 
                 % Save weights and errors
                 errorsArrayTarget{replID} = errorStruct;
+                estArrayTarget{replID} = estStruct;
                 if saveWeights
-                    weightsArray{nID, replID} = weightStruct;
+                    % Save sample and corresponding weights
+                    thetaPointArray{replID} = thetaTrue;
+                    weightsArray{replID} = weightStruct;
                 end
                 if saveUnrestricted
-                    unitsUnrestrArray{nID, replID} = unitsUnrestrStruct;
+                    unitsUnrestrArray = unitsUnrestrStruct;
                 end
                 
                 
@@ -128,21 +149,40 @@ for tID = 1:numT
             end
             
             % Compute MSE for current target value
-            msePointStructsArray{targetValueID} = ...
-                uaProcessOneValueError(errorsArrayTarget, paramArray);
-                   
-            % POSSIBLY obtain some sort of density for weights or something
+            [msePointStructsArray{targetValueID},...
+               biasPointStructsArray{targetValueID},...
+               varPointStructsArray{targetValueID}] = ...
+                uaProcessOneValueError(...
+                errorsArrayTarget, estArrayTarget, ...
+                paramArray, targetParamsPoint);
+            
+            % Process the weights if necessary
+            if saveWeights
+                weightsRegArray{targetValueID} = ...
+                    uaAverageWeight(paramArray, thetaPointArray,...
+                    weightsArray, ...
+                    theta1Range, 0.1);
+            end
         end
         % Glue together the msePointStructsArray into a struct of tables
-        mseTablesN{nID, tID} = ...
-            usProcessMSE(msePointStructsArray, paramArray);
+        [mseTablesN{nID, tID}, ...
+            biasTablesN{nID, tID}, ...
+            varTablesN{nID, tID}] = ...
+            uaProcessMSE(msePointStructsArray, biasPointStructsArray,...
+            varPointStructsArray, paramArray);
         
+        if saveWeights
+            % Glue together weight arrays
+            weightsTablesNT{nID, tID} = ...
+                uaProcessWeights(weightsRegArray, paramArray);
+        end
     end
 end
 %%
 % Extract range of methods for plotting
 optimalSchemes = ...
-    uaOptimalSchemes(randn(2, N), 'firstOnly', averagingIncludeBool);
+    uaOptimalSchemes(randn(2, N), randn(2, N), randn(N, 1), ...
+    'firstOnly', averagingIncludeBool);
 methodsForPlotting = ...
     uaAddOptimalToMethodsStruct(methodsArray, optimalSchemes);
 
