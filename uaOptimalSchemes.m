@@ -1,5 +1,6 @@
 function optimalSchemes = ...
-    uaOptimalSchemesExp2(thetaHat, averagingMode, averagingIncludeBool)
+    uaOptimalSchemes(thetaHat, thetaTrue, thetaLabels,...
+    averagingMode, averagingIncludeBool)
 % uaOptimalSchemes Implements the fixed-N and various large-N optimal
 % schemes. 6 approaches are implemented currently
 %
@@ -7,7 +8,9 @@ function optimalSchemes = ...
 %            units
 %         2. averagingMode -- 'all' or 'firstOnly'. Determines if all units
 %            are to serve as targets or only the first one 
-%         3. averagingIncludeBool -- boolean 6-vector. True in kth position
+%         3.
+%         4. 
+%         5. averagingIncludeBool -- boolean 6-vector. True in kth position
 %            means kth approach is returned
 
 %
@@ -114,7 +117,9 @@ optimalSchemes{7}.shortName = 'random10pct';
 optimalSchemes{7}.longName = 'Large-N (random 10%)';
 for targetID = 1:numTargets
     randomBool = false(numUnits, 1);
-    randomBool(datasample(1:numUnits, ceil(numUnits*0.1), 'Replace',false)) = true;
+    randomBool(...
+        datasample(1:numUnits, ceil(numUnits*0.1), 'Replace',false)...
+        ) = true;
     randomBool(targetID) = true;
     optimalSchemes{7}.unrestrictedArray{targetID} = ...
         @(weightVector) randomBool;
@@ -124,9 +129,64 @@ optimalSchemes{7}.lineStyle = ':';
 optimalSchemes{7}.marker = '>';
 
 
+% Oracle labels
+optimalSchemes{8}.shortName = 'oracleClasses';
+optimalSchemes{8}.longName = 'Large-N (true class labels)';
+for targetID = 1:numTargets
+    currentCluster = thetaLabels(targetID);
+    optimalSchemes{8}.unrestrictedArray{targetID} = ...
+        @(weightVector) thetaLabels == currentCluster;
+end
+optimalSchemes{8}.color =   [38, 185, 159]/255;  %  aquamarine
+optimalSchemes{8}.lineStyle = ':'; 
+optimalSchemes{8}.marker = 'v';
+
+
+% Anti-oracle labels
+optimalSchemes{9}.shortName = 'antiOracleClasses';
+optimalSchemes{9}.longName = 'Large-N (opposite class labels)';
+for targetID = 1:numTargets
+    currentCluster = thetaLabels(targetID);
+    optimalSchemes{9}.unrestrictedArray{targetID} = ...
+        @(weightVector) thetaLabels ~= currentCluster;
+end
+optimalSchemes{9}.color =   [38, 100, 200]/255;  %  mildly reddish blue
+optimalSchemes{9}.lineStyle = ':'; 
+optimalSchemes{9}.marker = '^';
+
+
+% Oracle similarity
+optimalSchemes{10}.shortName = 'oracleSimilarity';
+optimalSchemes{10}.longName = 'Large-N (10 most similar)';
+for targetID = 1:numTargets
+    dists = sum((thetaTrue-thetaTrue(:, 1)).^2);
+    [~, I] = sort(dists); 
+    mostSimilarIdx = I(1:10);
+    similarBool = false(numUnits, 1);
+    similarBool(mostSimilarIdx) = true;
+    optimalSchemes{10}.unrestrictedArray{targetID} = ...
+        @(weightVector) similarBool;
+end
+optimalSchemes{10}.color =   [0, 0, 255]/255;  %  most blue
+optimalSchemes{10}.lineStyle = ':'; 
+optimalSchemes{10}.marker = '<';
+
+
+% Top 10 weights of fixed-N criterion  
+optimalSchemes{11}.shortName = 'top10';
+optimalSchemes{11}.longName = 'Large-N (top 10 unrestricted)';
+for targetID = 1:numTargets
+    optimalSchemes{11}.unrestrictedArray{targetID} = ...
+        @(weightVector) boolTopCoords(weightVector, targetID, 10/numUnits);
+end
+optimalSchemes{11}.color =   [218, 1, 40]/255;  %  pink
+optimalSchemes{11}.lineStyle = ':'; 
+optimalSchemes{11}.marker = 'x';
+
+
+
 % Extract only the desired averaging schemes
 optimalSchemes = optimalSchemes(averagingIncludeBool);
-
 end
 
 
