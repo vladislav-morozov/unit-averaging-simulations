@@ -24,17 +24,17 @@ plotQuietly = false;
 seedCoefficients = 1; 
 
 % Number of replications
-numReplications = 40;
+numReplications = 2000;
 
 % Saving
-saveWeights = false;
+saveWeights = true;
 saveUnrestricted = false; 
 
 %% DGP Parameters
 % There are several DGPs implemented. Chosen by simulationSetting
 % 
 
-simulationSetting = "unimodal";
+simulationSetting = "bimodal";
 uaSetParameters
 
 

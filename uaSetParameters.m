@@ -1,4 +1,6 @@
 
+ 
+
 if simulationSetting == "unimodal"
     coefApproach = 'unimodal';
     % variance of heteroskedasticity
@@ -10,9 +12,9 @@ if simulationSetting == "unimodal"
     
     % Data dimensions
     valuesN= [50, 150, 450]; % values of N to compare, must be arranged in ascending order
-    valuesT = [30, 60, 180] ;
+    valuesT = [30, 60, 180, 600] ;
 
-    averagingIncludeBool = logical([1, 1, 1, 1, 0, 0, 1]);
+    averagingIncludeBool = logical([1, 1, 1, 1, 0, 0, 1, 0]);
     yMinRelMSEPlot = 0.65;
     yMaxRelMSEPlot = 1.51;
 elseif simulationSetting == "bimodal"
@@ -22,14 +24,18 @@ elseif simulationSetting == "bimodal"
     varianceX = 2;  
 
     % Parameter range
-    theta1Range = 0:0.04:0.99;
+    theta1Range = 0.1:0.05:0.8;
     
     % Data dimensions
     valuesN= [50, 150, 450]; % values of N to compare, must be arranged in ascending order
-    valuesT = [30, 90] ;
+    valuesT = [30, 60, 180, 600] ;
 
-    averagingIncludeBool = logical([1, 1, 1, 1, 1, 1]);
+    % Schemes to include
+    averagingIncludeBool = logical([1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0]);
     
+    % Plotting parameters
+    yMinRelMSEPlot = 0.72;
+    yMaxRelMSEPlot = 1.51;
 elseif simulationSetting == "local"
     % Coefficient DGP
     coefApproach = "local";

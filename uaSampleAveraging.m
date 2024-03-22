@@ -1,4 +1,4 @@
-function [errorStruct, weightStruct, unitsUnrestrStruct] = ...
+function [errorStruct, estStruct, weightStruct, unitsUnrestrStruct] = ...
     uaSampleAveraging(y, covars,...
     thetaHat,thetaTrue,...
     estVarianceArray, ...
@@ -32,11 +32,12 @@ function [errorStruct, weightStruct, unitsUnrestrStruct] = ...
 %         1. errorStruct -- struct with indexing structure .paramName ->
 %            .approachName -> N-vector of errors. jth entry of vector is
 %            error of estimating paramName with approach for unit j
-%         2. weightStruct -- struct with indexing structure .paramName ->
+%         2. estStruct
+%         3. weightStruct -- struct with indexing structure .paramName ->
 %            .approachName -> NxN matrix of weights. jth row of matrix
 %            describes the weights when estimating paramName with
 %            approachName for unit j.
-%         3. unitsUnrestrStruct -- struct with indexing structure
+%         4. unitsUnrestrStruct -- struct with indexing structure
 %            .paramName -> .approachName -> NxN matrix of Booleans. jth
 %            row of matrix describes units unrestricted when estimating
 %            paramName with approachName for unit j
@@ -63,6 +64,7 @@ for parID = 1:numParams
         errorStruct.(paramName).(approachShortName) = nan(numTargets, 1);
         weightStruct.(paramName).(approachShortName) = ...
             nan(numTargets, numUnits);
+        estStruct.(paramName).(approachShortName) = nan(numTargets, 1);
     end
 end
 
@@ -103,21 +105,25 @@ for parID = 1:numParams
             % modify the unrestrictedBooltargetId vector
             if isfield(approach, "unrestrictedArray")
                 % If the approach is 'top', then further differentiate
-                if approach.shortName == "top"
+                if (approach.shortName == "top" || ...
+                        approach.shortName == "top10") 
+                % Top approaches are based on fixed-N weights
                     targetWeightsSetup ...
                         = weightStruct.(paramName).unrestr(targetID, :)';
                 else
+                % Other approaches get a dummy weight
                     targetWeightsSetup = ones(numTargets, 1)/numTargets;
                 end
                 
+                % Extract the unrestricted units
                 unrestrictedBooltargetId = ...
                     approach.unrestrictedArray{targetID}(targetWeightsSetup);
-                
-                unitsUnrestrStruct.(paramName).(approachShortName)(targetID, :) = ...
+                % Save the unrestricted units
+                unitsUnrestrStruct.(paramName).(approachShortName)(...
+                    targetID, :) = ...
                     unrestrictedBooltargetId';
             end
-            
-            
+           
             % Compute weights of the current approach
             weightsCurrent = approach.weightFunction(...
                 y, covars, thetaHat,...
@@ -125,7 +131,7 @@ for parID = 1:numParams
                 targetID, unrestrictedBooltargetId);
             
             % Compute averaging estimate and its error
-            avgEst = weightsCurrent'*unitParamEsts;
+            avgEst = weightsCurrent'*unitParamEsts;  
             errorCurrent = avgEst-targetParamValue;
             
             % Insert the weights into the weights array
@@ -134,6 +140,8 @@ for parID = 1:numParams
             % Insert the error into the error array
             errorStruct.(paramName).(approachShortName)(targetID) = ...
                 errorCurrent;
+            % Insert the estimate into the estimate array
+            estStruct.(paramName).(approachShortName)(targetID) = avgEst;
         end
     end
 end

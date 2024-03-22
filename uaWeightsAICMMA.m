@@ -1,8 +1,21 @@
 function outputWeights = ...
-    uaWeightsAICMMA(individualEstimators, y, x, target, k)
-% uaWeightsAICMMA Computes exponential AIC  and MMA weights to average models,
-% averaging first k models
-% target may be equal to 'aic' or 'mma'
+    uaWeightsAICMMA(individualEstimators, y, x, weightScheme, k)
+% uaWeightsAICMMA Computes exponential AIC  and MMA weights  for unit
+% averaging targeting the first unit.
+% AIC is computed using normal likelihood.
+%
+% Args: 
+%       1. individualEstimators -- kxN matrix of individual estimates,
+%          columns index cross-sectional units
+%       2. y -- TxN matrix of outcome variables, columns index units
+%       3. x -- TxNxk array of covariates of the model, third dimension
+%          indexes covariates
+%       4. weightScheme -- string, 'aic' or 'mma', determines which weights 
+%          are returned 
+%       5. k -- integer. Averaging will be done using the first k units
+%
+% Outputs: 
+%       1. outputWeights -- k-vector of weights
 
 
 % Extract dimension
@@ -29,7 +42,7 @@ for i=1:k
 end
 
 
-if target == "aic"
+if weightScheme == "aic"
     outputWeights = exp(-ll*T + 2)/sum(exp(-ll*T + 2));
 else
     [~, minAICIdx] = min(ll);
