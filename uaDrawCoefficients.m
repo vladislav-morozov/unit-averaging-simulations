@@ -1,5 +1,5 @@
-function [thetaSample, sigmaSqSample] = ...
-    uaDrawCoefficientsExp2(approach, N, varNoise, seedCoefficients)
+function [thetaSample, sigmaSqSample, thetaComponentLabels] = ...
+    uaDrawCoefficients(approach, N, varNoise, seedCoefficients)
 % uaDrawCoefficients Simulates data for the AR(1) panel.
 % The underlying model is
 %   y_{it} = theta_{i1} y_{it-1} + theta_{i2} x_{it} + u_{it}
@@ -35,17 +35,21 @@ elseif approach == "bimodal"
     
     % Draw theta_{i1}
     lambdaSample = nan(1, N);  
-    betaCenters = [0.3, 0.65];
-    betaScales = [0.5, 0.3];
+    betaSample = nan(1, N);
+    thetaComponentLabels = nan(N, 1);
+    lambdaCenters = [0.3, 0.65];
+    lambdaScales = [0.4, 0.4];
+    
+    betaCenters = [0, 2];
+    betaScales = [0.3, 0.3];
     for unitID = 1:N
         unitComponent = randi(2);
-        lambdaSample(unitID) = betaCenters(unitComponent) +...
-            betaScales(unitComponent)*(betarnd(5,5,1,1)-0.5);
+        lambdaSample(unitID) = lambdaCenters(unitComponent) +...
+            lambdaScales(unitComponent)*(betarnd(5,5,1,1)-0.5);
+        thetaComponentLabels(unitID) = unitComponent;
+        betaSample(unitID) = betaCenters(unitComponent) +...
+            betaScales(unitComponent)*(randn(1));
     end
-    
-    % Draw theta_{i2}
-    betaSample = 1 + sqrt(1)*randn(1, N);
-    
 elseif approach == "local"
     % Local parameters -- results approximately independent of T
     % Used in version 1 of the paper, all coefficients are as there
@@ -68,4 +72,9 @@ end
 thetaSample = [lambdaSample; betaSample];
 % Draw variance of the error term
 sigmaSqSample = exprnd(varNoise, 1, N);
+
+if approach ~= "bimodal"
+   % In non-multimodal cases, all observations have the same class label
+   thetaComponentLabels = ones(N, 1); 
+end
 end
