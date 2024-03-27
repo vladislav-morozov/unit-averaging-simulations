@@ -29,13 +29,10 @@ numReplications = 2000;
 % Saving
 saveWeights = true;
 saveUnrestricted = false; 
-
-%% DGP Parameters
-% There are several DGPs implemented. Chosen by simulationSetting
-% 
-
-simulationSetting = "bimodal";
-uaSetParameters
+ 
+% DGP choice
+% There are several DGPs implemented. Supplying a list will run all of them
+simulationSettings = ["unimodal", "bimodal"];
 
 
 %% Parameters to estimate in the model
@@ -159,9 +156,17 @@ methodsArray{5}.marker = 'x';
 
 %% Simulation
 % Main simulation file
-uaSimulate
 
-%% Export plots
-% The uaExportFigures script exports relative MSE plots 
-uaExportFigures
-% uaExportFigures
+for designID = 1:length(simulationSettings)
+    % Extract current design name
+    simulationSetting = simulationSettings(designID);
+    
+    % Set parameters
+    uaSetParameters 
+    
+    % Run simulation
+    uaSimulate
+    
+    % Export plots 
+    uaExportFigures
+end 
