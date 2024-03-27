@@ -42,6 +42,7 @@ mseTablesN = cell(numN, numT);
 biasTablesN = cell(numN, numT);
 varTablesN = cell(numN, numT);
 weightsTablesNT = cell(numN, numT);
+firstWeightNT = cell(numN, numT);
  
 % Loop through the different values of N
 for tID = 1:numT
@@ -54,6 +55,7 @@ for tID = 1:numT
         biasPointStructsArray = cell(numTargetPoints, 1);  
         varPointStructsArray = cell(numTargetPoints, 1);  
         weightsRegArray = cell(numTargetPoints, 1);  
+        averageFirstWeightArray = cell(numTargetPoints, 1);  
         % Iterate through the target values
         for targetValueID = 1:numTargetPoints
             
@@ -158,7 +160,8 @@ for tID = 1:numT
             
             % Process the weights if necessary
             if saveWeights
-                weightsRegArray{targetValueID} = ...
+                [weightsRegArray{targetValueID}, ...
+                    averageFirstWeightArray{targetValueID}] = ...
                     uaAverageWeight(paramArray, thetaPointArray,...
                     weightsArray, ...
                     theta1Range, 0.1);
@@ -173,8 +176,11 @@ for tID = 1:numT
         
         if saveWeights
             % Glue together weight arrays
-            weightsTablesNT{nID, tID} = ...
-                uaProcessWeights(weightsRegArray, paramArray);
+            [weightsTablesNT{nID, tID}, firstWeightNT{nID, tID}] = ...
+                uaProcessWeights(paramArray, ...
+                weightsRegArray, ...
+                averageFirstWeightArray...
+                );
         end
     end
 end
@@ -183,7 +189,7 @@ end
 optimalSchemes = ...
     uaOptimalSchemes(randn(2, N), randn(2, N), randn(N, 1), ...
     'firstOnly', averagingIncludeBool);
-methodsForPlotting = ...
+allMethodsArray = ...
     uaAddOptimalToMethodsStruct(methodsArray, optimalSchemes);
 
 

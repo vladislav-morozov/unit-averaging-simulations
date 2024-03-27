@@ -7,9 +7,12 @@ plotH = 400; % height in pixels
 
 
 %% Line plots
+% These plots expect data to be provided in table form (including column
+% names)
 
 % Relative MSE
 linePlots{1}.data = mseTablesN;
+linePlots{1}.approachesToPlot = approachesToPlotMSE;
 linePlots{1}.firstColumnPlot = 2;
 linePlots{1}.dataTransform = ...
     @(dataTable, colIdx) dataTable{:, colIdx}./dataTable{:, 1};
@@ -22,6 +25,7 @@ linePlots{1}.plotSavingName = 'relative_mse';
 
 % Absolute MSE
 linePlots{2}.data = mseTablesN;
+linePlots{2}.approachesToPlot = approachesToPlotMSE;
 linePlots{2}.firstColumnPlot = 1;
 linePlots{2}.dataTransform = ...
     @(dataTable, colIdx) dataTable{:, colIdx};
@@ -34,6 +38,7 @@ linePlots{2}.plotSavingName = 'absolute_mse';
 
 % Relative square bias
 linePlots{3}.data = biasTablesN;
+linePlots{3}.approachesToPlot = approachesToPlotMSE;
 linePlots{3}.firstColumnPlot = 2;
 linePlots{3}.dataTransform = ...
     @(dataTable, colIdx) (dataTable{:, colIdx}.^2)./(dataTable{:, 1}.^2);
@@ -47,6 +52,7 @@ linePlots{3}.plotSavingName = 'relative_sq_bias';
 
 % Relative variance
 linePlots{4}.data = varTablesN;
+linePlots{4}.approachesToPlot = approachesToPlotMSE;
 linePlots{4}.firstColumnPlot = 2;
 linePlots{4}.dataTransform = ...
     @(dataTable, colIdx) (dataTable{:, colIdx})./(dataTable{:, 1});
@@ -59,13 +65,31 @@ linePlots{4}.suptitle = @(plotDescr) 'Averaging estimator, ' + ...
 linePlots{4}.plotSavingName = 'relative_variance';
 
 
+% Average weight of first unit
+linePlots{5}.data = firstWeightNT;
+linePlots{5}.approachesToPlot = approachesToPlotMSE; %approachesToPlotFirstWeight;
+linePlots{5}.firstColumnPlot = 1;
+linePlots{5}.dataTransform = ...
+    @(dataTable, colIdx) dataTable{:, colIdx};
+linePlots{5}.yLims = @(dataTable) [0, 1];
+linePlots{5}.relative = false;
+linePlots{5}.suptitle = @(plotDescr) 'Averaging estimator, ' + ...
+    plotDescr + ...
+    ', average weight of target unit';
+linePlots{5}.plotSavingName = 'average_first_weight';
+
+
 %%
 
 
 % Loop through plot descriptions
+% for plotID = 1:1
 for plotID = 1:length(linePlots)
     % Extract description of the plot
     plotDescrStruct = linePlots{plotID};
+    
+    % Extract the approaches for this plot
+    approachesToPlot = plotDescrStruct.approachesToPlot;
     
     % Loop over parameters
     for parID = 1:numParams
@@ -92,17 +116,30 @@ for plotID = 1:length(linePlots)
                 % Extract data
                 currentParTable = plotDescrStruct.data{nID, tID}.(paramName);
                 
+                % Extract approaches present in this table
+                approachesPresent = currentParTable.Properties.VariableNames;
+                
                 % Extract number of approaches
                 numApproaches = size(currentParTable, 2);
                 
                 % Plot
                 hold(ax, 'on');
                 for approachID = plotDescrStruct.firstColumnPlot:numApproaches
-                    %                 if ~plotMethod(approachID)
-                    %                    continue
-                    %                 end
-                    %
-                    approach = methodsForPlotting{approachID};
+                    
+                    % Get approach short name
+                    approachShortName = string(approachesPresent{approachID});
+                    
+                    % Check if approach is present in the list of
+                    % approaches to plot
+                    approachPresent = ismember(approachShortName ,approachesToPlot);
+                    % Skip if this approach was not available
+                    if ~approachPresent
+                        continue
+                    end
+                    
+                    % Extract information 
+                    approachCoord = findApproach(allMethodsArray, approachShortName);
+                    approach = allMethodsArray{approachCoord};
                     approachName = approach.longName;
                     
                     currentLineData = ...
@@ -157,13 +194,13 @@ end
  
 % Approach to plot
 approachWeightPlot = "unrestr";
-for approachID = 1:length(methodsForPlotting)
-    if methodsForPlotting{approachID}.shortName == approachWeightPlot
+for approachID = 1:length(allMethodsArray)
+    if allMethodsArray{approachID}.shortName == approachWeightPlot
        break 
     end
 end
 
-approach = methodsForPlotting{approachID};
+approach = allMethodsArray{approachID};
 approachLongName = approach.longName;
 for parID = 1:numParams
     % Parameter name
@@ -223,13 +260,13 @@ end
 
 % Approach to plot
 approachWeightPlot = "unrestr";
-for approachID = 1:length(methodsForPlotting)
-    if methodsForPlotting{approachID}.shortName == approachWeightPlot
+for approachID = 1:length(allMethodsArray)
+    if allMethodsArray{approachID}.shortName == approachWeightPlot
        break 
     end
 end
 
-approach = methodsForPlotting{approachID};
+approach = allMethodsArray{approachID};
 approachLongName = approach.longName;
 for parID = 1:numParams
     % Parameter name
@@ -278,4 +315,20 @@ for parID = 1:numParams
         % Save both EPS and JPG versions
         saveas(p,figureSavingName,'epsc');
         saveas(p,figureSavingName,'jpg')
+end
+
+%% 
+function approachPos = findApproach(methodsArray, approachToFindShortName)
+% findApproach Finds the cooordinate of an averaging approach using its
+% short name
+    
+    % Default to NaN
+    approachPos = NaN;
+    for approachIdx = 1:length(methodsArray)
+        if methodsArray{approachIdx}.shortName == approachToFindShortName
+           approachPos = approachIdx;
+           break 
+        end
+        
+    end
 end

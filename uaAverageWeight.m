@@ -1,18 +1,26 @@
-function weightsRegArray = uaAverageWeight(paramArray, thetaPointArray, weightsArray, ...
+function [weightsRegStruct, averageFirstWeightStruct] ...
+    = uaAverageWeight(paramArray, thetaPointArray, weightsArray, ...
 thetaGrid, bandwidth) 
-% uaAverageWeight Computes average weights for values in thetaGrid 
+% uaAverageWeight Computes average weights for values in thetaGrid. Also
+% computes average own weight
 
 % Extract dimensions
 numParams = length(paramArray);
 numSamples = length(thetaPointArray);
 
 % Approaches to plot
-approachesToPlot = ["unrestr", "top",   "oracleSimilarity"];
+approachesAverageWeights = ["unrestr", "top",   "oracleSimilarity"];
+% Approaches for own weight
+approachesOwnWeight = ["unrestr", "top", "oracleSimilarity", "stein"];
  
 % Loop through parameters
 for paramID = 1:numParams
     % Extract parameter name
     paramName = paramArray{paramID}.saveName;
+    
+    %%%%%%%%%%%%%%%%%%%%%%%
+    %%% Average weights %%%
+    %%%%%%%%%%%%%%%%%%%%%%%
     
     % Combine together theta_1 samples drawn
     for sampleID = 1:numSamples
@@ -24,9 +32,9 @@ for paramID = 1:numParams
     end
     
     % Loop through the different approaches specified
-    for approachID = 1:length(approachesToPlot)
+    for approachID = 1:length(approachesAverageWeights)
         % Extract approach name
-        approachName = approachesToPlot(approachID);
+        approachName = approachesAverageWeights(approachID);
         % Combine together the weights obtain (same order as thetasDrawn)
         for sampleID = 1:numSamples
             if sampleID == 1
@@ -42,9 +50,26 @@ for paramID = 1:numParams
             weightsNW(pointID) = sum(weightsDrawn .* kernelWeights) / sum(kernelWeights);
         end
         % Save computed weights into a suitable struct
-        weightsRegArray.(paramName).(approachName) = weightsNW;
+        weightsRegStruct.(paramName).(approachName) = weightsNW;
     end
     
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%% Average first weight %%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    for approachID = 1:length(approachesOwnWeight)
+        % Extract approach name
+        approachName = approachesOwnWeight(approachID);
+        % Extract weight of the first unit in each iteration
+        for sampleID = 1:numSamples
+            if sampleID == 1
+                firstWeight = weightsArray{sampleID}.(paramName).(approachName)(1);
+            else
+                firstWeight = [firstWeight; weightsArray{sampleID}.(paramName).(approachName)(1)];
+            end
+        end
+        % Save average first unit weight for current approach
+        averageFirstWeightStruct.(paramName).(approachName) = mean(firstWeight);
+    end
 end
 
 end

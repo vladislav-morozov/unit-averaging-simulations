@@ -1,4 +1,5 @@
-function weightsTableStruct = uaProcessWeights(weightsRegArray, paramArray)
+function [weightsTableStruct, firstUnitTable]...
+    = uaProcessWeights(paramArray, weightsRegArray, averageFirstWeightArray)
 
 % Rows index target points, columns index grid points
 
@@ -12,11 +13,15 @@ for paramID = 1:numParams
     % Extract parameter name
     paramName = paramArray{paramID}.saveName;
     
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%% Processing all weights %%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
     % Extract and loop through approaches
-    approachList = fieldnames(weightsRegArray{1}.(paramName));
+    approachListAllWeights = fieldnames(weightsRegArray{1}.(paramName));
     % Loop through target points
-    for approachID = 1:length(approachList)
-        approachName = approachList{approachID};
+    for approachID = 1:length(approachListAllWeights)
+        approachName = approachListAllWeights{approachID};
         for targetValueID = 1:length(weightsRegArray)
             % If first value, create the table
             if targetValueID == 1
@@ -34,4 +39,34 @@ for paramID = 1:numParams
         end
         weightsTableStruct.(paramName).(approachName) = weightsTable;
     end
+    
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%% Processing first unit weights %%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    % Extract and loop through approaches
+    approachListFirstWeight  = fieldnames(averageFirstWeightArray{1}.(paramName));
+    % Loop through target points
+    for approachID = 1:length(approachListFirstWeight)
+        approachName = approachListFirstWeight{approachID};
+        for targetValueID = 1:length(weightsRegArray)
+            % If first value, create the table
+            if targetValueID == 1
+                firstUnitVector = ...
+                    averageFirstWeightArray{targetValueID}.(paramName).(approachName);
+                
+            else
+                firstUnitVector = [...
+                    firstUnitVector;
+                    averageFirstWeightArray{targetValueID}.(paramName).(approachName)...
+                    ];
+                
+            end
+            
+        end
+        firstUnitStruct.(paramName).(approachName) = firstUnitVector;
+    end
+    firstUnitTable.(paramName) = struct2table(firstUnitStruct.(paramName));
+end
 end
