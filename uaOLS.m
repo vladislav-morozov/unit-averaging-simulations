@@ -32,7 +32,7 @@ end
 % Allocate array for coefficient estimates
 betaMatrix = nan(k, N);
 % Allocate variance array
-estVarianceArray = cell(N);
+estVarianceArray = cell(N, 1);
 % Allocate auxiliary array for variances of u
 estVarianceUVector = nan(N,1);
 
