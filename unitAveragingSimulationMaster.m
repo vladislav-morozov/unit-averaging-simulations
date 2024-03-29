@@ -15,6 +15,8 @@
 
 clear variables
 close all
+
+addpath('Utilities')
 %% Simulation parameters
 
 % whether plots should be shown or saved without showing
@@ -33,7 +35,7 @@ saveUnrestricted = false;
 % DGP choice
 % There are several DGPs implemented. Supplying a list will run all of them
 simulationSettings = ["unimodal", "bimodal"];
-
+simulationSettingsCI = ["ci_unimodal","ci_bimodal"];
 
 %% Parameters to estimate in the model
 % The model is
@@ -154,8 +156,7 @@ methodsArray{5}.color =   [0, 0, 0];
 methodsArray{5}.lineStyle = '--';
 methodsArray{5}.marker = 'x';
 
-%% Simulation
-% Main simulation file
+%% MSE Simulation 
 
 for designID = 1:length(simulationSettings)
     % Extract current design name
@@ -169,4 +170,18 @@ for designID = 1:length(simulationSettings)
     
     % Export plots 
     uaExportFigures
+end 
+
+%% Coverage simulation
+
+% Number of replications
+numReplications = 500;
+
+for designID = 1:length(simulationSettingsCI)
+    % Extract current design name
+    simulationSetting = simulationSettingsCI(designID);
+    
+    % Set parameters
+    uaSetParameters
+    uaSimulateCI;
 end 
