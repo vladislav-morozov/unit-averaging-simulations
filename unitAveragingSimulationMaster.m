@@ -34,7 +34,7 @@ saveUnrestricted = false;
  
 % DGP choice
 % There are several DGPs implemented. Supplying a list will run all of them
-simulationSettings = ["unimodal", "bimodal"];
+simulationSettings = ["unimodal", "bimodal", "bimodal_close"];
 simulationSettingsCI = ["ci_unimodal","ci_bimodal"];
 
 %% Parameters to estimate in the model
@@ -161,6 +161,9 @@ methodsArray{5}.marker = 'x';
 for designID = 1:length(simulationSettings)
     % Extract current design name
     simulationSetting = simulationSettings(designID);
+    
+    % Close all figures
+    close all
     
     % Set parameters
     uaSetParameters 
