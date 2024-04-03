@@ -10,6 +10,7 @@ function [msePointStruct, biasPointStruct, varPointStruct] = ...
 
 % Extract number of parameters
 numParams = length(paramArray);
+meanTrimPct = 2;
 
 % Loop through parameters
 for paramID = 1:numParams
@@ -54,9 +55,11 @@ for paramID = 1:numParams
         end
     end
     % Compute the MSE as the average square error
-    mseEst = mean(sampleErrors.^2); 
-    biasEst = mean(sampleEst) - mean(sampleTarget);
+    mseEst = trimmean(sampleErrors.^2, meanTrimPct); 
+    biasEst = trimmean(sampleEst, meanTrimPct) - trimmean(sampleTarget, meanTrimPct);
     varEst = var(sampleEst);
+%         trimmean(sampleEst.^2, meanTrimPct) - ...
+%         (trimmean(sampleEst, meanTrimPct)).^2;
     
     % Convert to table; column names are averaging approaches
     mseEstTable = ...
