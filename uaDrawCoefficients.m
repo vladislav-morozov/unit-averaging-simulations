@@ -5,7 +5,7 @@ function [thetaSample, sigmaSqSample, thetaComponentLabels] = ...
 %   y_{it} = theta_{i1} y_{it-1} + theta_{i2} x_{it} + u_{it}
 % Implements several options for drawing parameters (approach)
 %
-% Args: 1. approach -- string; the DGP for coefficients. 
+% Args: 1. approach -- string; the DGP for coefficients.
 %       2. N -- integer; cross-sectional size of the sample
 %       3. varNoise -- integer; variance of the variances of u_{it}
 %       4. seedCoefficients -- integer; seed for the rng
@@ -16,7 +16,7 @@ function [thetaSample, sigmaSqSample, thetaComponentLabels] = ...
 
 % Set RNG
 rng(seedCoefficients,'philox')
- 
+
 % Draw coefficients depending on the approach
 if approach == "unimodal"
     % AR(1) coefficients follow a Beta distribution
@@ -28,13 +28,13 @@ if approach == "unimodal"
     
     % Draw theta_{i2}
     betaSample = 1 + sqrt(1)*randn(1, N);
-
+    
 elseif approach == "bimodal"
     % AR(1) coefficients follow a mixture of Betas
     % Exogeneous coefficients are N(1, 1)
     
     % Draw theta_{i1}
-    lambdaSample = nan(1, N);  
+    lambdaSample = nan(1, N);
     betaSample = nan(1, N);
     thetaComponentLabels = nan(N, 1);
     lambdaCenters = [0.3, 0.65];
@@ -50,23 +50,45 @@ elseif approach == "bimodal"
         betaSample(unitID) = betaCenters(unitComponent) +...
             betaScales(unitComponent)*(randn(1));
     end
+    
+elseif approach == "bimodal_close"
+    % AR(1) coefficients follow a mixture of Betas
+    % Exogeneous coefficients are N(1, 1)
+    
+    % Draw theta_{i1}
+    lambdaSample = nan(1, N);
+    betaSample = nan(1, N);
+    thetaComponentLabels = nan(N, 1);
+    lambdaCenters = [0.39, 0.61];
+    lambdaScales = [0.45, 0.45];
+    
+    betaCenters = [0, 2];
+    betaScales = [0.3, 0.3];
+    for unitID = 1:N
+        unitComponent = randi(2);
+        lambdaSample(unitID) = lambdaCenters(unitComponent) +...
+            lambdaScales(unitComponent)*(betarnd(5,5,1,1)-0.5);
+        thetaComponentLabels(unitID) = unitComponent;
+        betaSample(unitID) = betaCenters(unitComponent) +...
+            betaScales(unitComponent)*(randn(1));
+    end
 elseif approach == "local"
     % Local parameters -- results approximately independent of T
     % Used in version 1 of the paper, all coefficients are as there
     % This setting should not be used to do comparisons across different
-    % values 
-    T = 60;  
+    % values
+    T = 60;
     meanLambda = 0;
     meanBeta = 1;
     varianceBeta = 1;
     % Generate lambdas with locality. Support of eta scaled to compensate
     % for deflating the coefficients
-    etaLambda = 2*(1-abs(meanLambda))*(2*rand([1, N])-1);  
-    lambdaSample  = meanLambda+etaLambda/sqrt(T);  
+    etaLambda = 2*(1-abs(meanLambda))*(2*rand([1, N])-1);
+    lambdaSample  = meanLambda+etaLambda/sqrt(T);
     
     % Generate betas, also with locality
     betas = sqrt(varianceBeta)*randn(1, N);
-    betaSample = betas/sqrt(T)+meanBeta;   
+    betaSample = betas/sqrt(T)+meanBeta;
 end
 % Stack the two coefficient vectors together
 thetaSample = [lambdaSample; betaSample];
@@ -74,7 +96,7 @@ thetaSample = [lambdaSample; betaSample];
 sigmaSqSample = exprnd(varNoise, 1, N);
 
 if approach ~= "bimodal"
-   % In non-multimodal cases, all observations have the same class label
-   thetaComponentLabels = ones(N, 1); 
+    % In non-multimodal cases, all observations have the same class label
+    thetaComponentLabels = ones(N, 1);
 end
 end
