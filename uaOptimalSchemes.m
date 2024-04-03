@@ -46,8 +46,8 @@ optimalSchemes{1}.marker = 'o';
 
 % Clustering coefficients
 coefClusters = kmeans(thetaHat', 2); % cluster coefs
-optimalSchemes{2}.shortName = 'cluster_coef';
-optimalSchemes{2}.longName = 'Large-N (clustering coefficients)';
+optimalSchemes{2}.shortName = 'cluster_coef_2';
+optimalSchemes{2}.longName = 'Large-N (2 coef clusters)';
 for targetID = 1:numTargets
     currentCluster = coefClusters(targetID);
     optimalSchemes{2}.unrestrictedArray{targetID} = ...
@@ -57,131 +57,144 @@ optimalSchemes{2}.color =  [90, 30, 236]/255;  % purple
 optimalSchemes{2}.lineStyle = ':'; 
 optimalSchemes{2}.marker = '*';
 
-% Top weights of fixed-N criterion (fixed-N must also be available)
-optimalSchemes{3}.shortName = 'top';
-optimalSchemes{3}.longName = 'Large-N (top 10% unrestricted)';
+% Clustering coefficients
+coefClusters = kmeans(thetaHat', 4); % cluster coefs
+optimalSchemes{3}.shortName = 'cluster_coef_4';
+optimalSchemes{3}.longName = 'Large-N (4 coef clusters)';
 for targetID = 1:numTargets
+    currentCluster = coefClusters(targetID);
     optimalSchemes{3}.unrestrictedArray{targetID} = ...
+        @(weightVector) coefClusters == currentCluster;
+end
+optimalSchemes{3}.color =  [90, 10, 236]/255;  % purpler
+optimalSchemes{3}.lineStyle = '-'; 
+optimalSchemes{3}.marker = '*';
+
+% Top weights of fixed-N criterion (fixed-N must also be available)
+optimalSchemes{4}.shortName = 'top';
+optimalSchemes{4}.longName = 'Large-N (top 10% unrestricted)';
+for targetID = 1:numTargets
+    optimalSchemes{4}.unrestrictedArray{targetID} = ...
         @(weightVector) boolTopCoords(weightVector, targetID, 0.1);
 end
-optimalSchemes{3}.color =   [218, 1, 136]/255;  % intense pink
-optimalSchemes{3}.lineStyle = ':'; 
-optimalSchemes{3}.marker = 'x';
+optimalSchemes{4}.color =   [218, 1, 136]/255;  % intense pink
+optimalSchemes{4}.lineStyle = ':'; 
+optimalSchemes{4}.marker = 'x';
 
 
 % Stein-like
-optimalSchemes{4}.shortName = 'stein';
-optimalSchemes{4}.longName = 'Stein-like';
+optimalSchemes{5}.shortName = 'stein';
+optimalSchemes{5}.longName = 'Stein-like';
 for targetID = 1:numTargets
-    optimalSchemes{4}.unrestrictedArray{targetID} = ...
+    optimalSchemes{5}.unrestrictedArray{targetID} = ...
         @(weightVector)  ((1:numUnits)==targetID)';
 end
-optimalSchemes{4}.color =   [179, 112, 79]/255;  % weird brown
-optimalSchemes{4}.lineStyle = ':'; 
-optimalSchemes{4}.marker = 'pentagram';
+optimalSchemes{5}.color =   [179, 112, 79]/255;  % weird brown
+optimalSchemes{5}.lineStyle = ':'; 
+optimalSchemes{5}.marker = 'pentagram';
 
 
 % Random 10 units
-optimalSchemes{5}.shortName = 'random10';
-optimalSchemes{5}.longName = 'Large-N (random 10 units)';
+optimalSchemes{6}.shortName = 'random10';
+optimalSchemes{6}.longName = 'Large-N (random 10 units)';
 for targetID = 1:numTargets
     randomBool = false(numUnits, 1);
     randomBool(datasample(1:numUnits, min(numUnits, 10), 'Replace',false)) = true;
     randomBool(targetID) = true;
-    optimalSchemes{5}.unrestrictedArray{targetID} = ...
+    optimalSchemes{6}.unrestrictedArray{targetID} = ...
         @(weightVector) randomBool;
 end
-optimalSchemes{5}.color =   [65, 60, 174]/255;  % purplish blue
-optimalSchemes{5}.lineStyle = ':'; 
-optimalSchemes{5}.marker = '>';
+optimalSchemes{6}.color =   [65, 60, 174]/255;  % purplish blue
+optimalSchemes{6}.lineStyle = ':'; 
+optimalSchemes{6}.marker = '>';
 
 
 % Random 20 units
-optimalSchemes{6}.shortName = 'random20';
-optimalSchemes{6}.longName = 'Large-N (random 20 units)';
+optimalSchemes{7}.shortName = 'random20';
+optimalSchemes{7}.longName = 'Large-N (random 20 units)';
 for targetID = 1:numTargets
     randomBool = false(numUnits, 1);
     randomBool(datasample(1:numUnits, min(numUnits, 20), 'Replace',false)) ...
         = true;
-    randomBool(targetID) = true;
-    optimalSchemes{6}.unrestrictedArray{targetID} = ...
-        @(weightVector) randomBool;
-end
-optimalSchemes{6}.color =   [30, 54, 236]/255;  %  blue
-optimalSchemes{6}.lineStyle = ':'; 
-optimalSchemes{6}.marker = '<';
-
-
-% Random 10%
-optimalSchemes{7}.shortName = 'random10pct';
-optimalSchemes{7}.longName = 'Large-N (random 10%)';
-for targetID = 1:numTargets
-    randomBool = false(numUnits, 1);
-    randomBool(...
-        datasample(1:numUnits, ceil(numUnits*0.1), 'Replace',false)...
-        ) = true;
     randomBool(targetID) = true;
     optimalSchemes{7}.unrestrictedArray{targetID} = ...
         @(weightVector) randomBool;
 end
 optimalSchemes{7}.color =   [30, 54, 236]/255;  %  blue
 optimalSchemes{7}.lineStyle = ':'; 
-optimalSchemes{7}.marker = '>';
+optimalSchemes{7}.marker = '<';
+
+
+% Random 10%
+optimalSchemes{8}.shortName = 'random10pct';
+optimalSchemes{8}.longName = 'Large-N (random 10%)';
+for targetID = 1:numTargets
+    randomBool = false(numUnits, 1);
+    randomBool(...
+        datasample(1:numUnits, ceil(numUnits*0.1), 'Replace',false)...
+        ) = true;
+    randomBool(targetID) = true;
+    optimalSchemes{8}.unrestrictedArray{targetID} = ...
+        @(weightVector) randomBool;
+end
+optimalSchemes{8}.color =   [30, 54, 236]/255;  %  blue
+optimalSchemes{8}.lineStyle = ':'; 
+optimalSchemes{8}.marker = '>';
 
 
 % Oracle labels
-optimalSchemes{8}.shortName = 'oracleClasses';
-optimalSchemes{8}.longName = 'Large-N (true class labels)';
-for targetID = 1:numTargets
-    currentCluster = thetaLabels(targetID);
-    optimalSchemes{8}.unrestrictedArray{targetID} = ...
-        @(weightVector) thetaLabels == currentCluster;
-end
-optimalSchemes{8}.color =   [38, 185, 159]/255;  %  aquamarine
-optimalSchemes{8}.lineStyle = ':'; 
-optimalSchemes{8}.marker = 'v';
-
-
-% Anti-oracle labels
-optimalSchemes{9}.shortName = 'antiOracleClasses';
-optimalSchemes{9}.longName = 'Large-N (opposite class labels)';
+optimalSchemes{9}.shortName = 'oracleClasses';
+optimalSchemes{9}.longName = 'Large-N (true class labels)';
 for targetID = 1:numTargets
     currentCluster = thetaLabels(targetID);
     optimalSchemes{9}.unrestrictedArray{targetID} = ...
+        @(weightVector) thetaLabels == currentCluster;
+end
+optimalSchemes{9}.color =   [38, 185, 159]/255;  %  aquamarine
+optimalSchemes{9}.lineStyle = ':'; 
+optimalSchemes{9}.marker = 'v';
+
+
+% Anti-oracle labels
+optimalSchemes{10}.shortName = 'antiOracleClasses';
+optimalSchemes{10}.longName = 'Large-N (opposite class labels)';
+for targetID = 1:numTargets
+    currentCluster = thetaLabels(targetID);
+    optimalSchemes{10}.unrestrictedArray{targetID} = ...
         @(weightVector) thetaLabels ~= currentCluster;
 end
-optimalSchemes{9}.color =   [38, 100, 200]/255;  %  mildly reddish blue
-optimalSchemes{9}.lineStyle = ':'; 
-optimalSchemes{9}.marker = '^';
+optimalSchemes{10}.color =   [38, 100, 200]/255;  %  mildly reddish blue
+optimalSchemes{10}.lineStyle = ':'; 
+optimalSchemes{10}.marker = '^';
 
 
 % Oracle similarity
-optimalSchemes{10}.shortName = 'oracleSimilarity';
-optimalSchemes{10}.longName = 'Large-N (10 most similar)';
+optimalSchemes{11}.shortName = 'oracleSimilarity';
+optimalSchemes{11}.longName = 'Large-N (10 most similar)';
 for targetID = 1:numTargets
     dists = sum((thetaTrue-thetaTrue(:, 1)).^2);
     [~, I] = sort(dists); 
     mostSimilarIdx = I(1:10);
     similarBool = false(numUnits, 1);
     similarBool(mostSimilarIdx) = true;
-    optimalSchemes{10}.unrestrictedArray{targetID} = ...
+    optimalSchemes{11}.unrestrictedArray{targetID} = ...
         @(weightVector) similarBool;
 end
-optimalSchemes{10}.color =   [0, 0, 255]/255;  %  most blue
-optimalSchemes{10}.lineStyle = ':'; 
-optimalSchemes{10}.marker = '<';
+optimalSchemes{11}.color =   [0, 0, 255]/255;  %  most blue
+optimalSchemes{11}.lineStyle = ':'; 
+optimalSchemes{11}.marker = '<';
 
 
 % Top 10 weights of fixed-N criterion  
-optimalSchemes{11}.shortName = 'top10';
-optimalSchemes{11}.longName = 'Large-N (top 10 unrestricted)';
+optimalSchemes{12}.shortName = 'top10';
+optimalSchemes{12}.longName = 'Large-N (top 10 unrestricted)';
 for targetID = 1:numTargets
-    optimalSchemes{11}.unrestrictedArray{targetID} = ...
+    optimalSchemes{12}.unrestrictedArray{targetID} = ...
         @(weightVector) boolTopCoords(weightVector, targetID, 10/numUnits);
 end
-optimalSchemes{11}.color =   [218, 1, 40]/255;  %  pink
-optimalSchemes{11}.lineStyle = ':'; 
-optimalSchemes{11}.marker = 'x';
+optimalSchemes{12}.color =   [218, 1, 40]/255;  %  pink
+optimalSchemes{12}.lineStyle = ':'; 
+optimalSchemes{12}.marker = 'x';
 
 
 
