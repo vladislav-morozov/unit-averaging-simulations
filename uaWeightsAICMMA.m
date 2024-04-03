@@ -1,5 +1,5 @@
 function outputWeights = ...
-    uaWeightsAICMMA(individualEstimators, y, x, weightScheme, k)
+    uaWeightsAICMMA(individualEstimators, y, x, weightScheme, numUnitsAvg)
 % uaWeightsAICMMA Computes exponential AIC  and MMA weights  for unit
 % averaging targeting the first unit.
 % AIC is computed using normal likelihood.
@@ -19,34 +19,34 @@ function outputWeights = ...
 
 
 % Extract dimension
-[T, N,~] = size(x);
+[T, N, k] = size(x);
 
 % If last argument is not supplied, use all units
 if nargin < 5
-    k = N;
+    numUnitsAvg = N;
 end
 
-sigmaHatSq = zeros(k,1);
-ll = zeros(k,1);
+sigmaHatSq = zeros(numUnitsAvg,1);
+ll = zeros(numUnitsAvg,1);
 H1 = [x(:,1,1), x(:,1,2)]; 
-for i=1:k
+for i=1:numUnitsAvg
     H  = [x(:,i, 1), x(:,i,2)];
     errorsVectorI = y(1:end,i)-H*individualEstimators(:,i);
     sigmaHatSq(i) = errorsVectorI'*errorsVectorI/(T-2);
     
     errorsVector1 = y(1:end,1)-H1*individualEstimators(:,i); 
-    % Compute normal log-likelihood
+    % Compute normal log-likelihood; note that variances are also treated
+    % as part of the individual parameter vector
     ll(i) = -log(sigmaHatSq(i))/2 + ...
-        1/T*(errorsVector1'*errorsVector1)/(2*sigmaHatSq(i));
-    ll(i) = ll(i)/4*pi;
+        1/T*(errorsVector1'*errorsVector1)/(2*sigmaHatSq(i)); 
 end
 
 
 if weightScheme == "aic"
-    outputWeights = exp(-ll*T + 2)/sum(exp(-ll*T + 2));
+    outputWeights = exp(-2*ll + 2*k)/sum(exp(-2*ll + 2*k));
 else
     [~, minAICIdx] = min(ll);
-    outputWeights = ((1:k) == minAICIdx)';
+    outputWeights = ((1:numUnitsAvg) == minAICIdx)';
 end
 
 
