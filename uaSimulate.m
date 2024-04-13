@@ -43,7 +43,10 @@ biasTablesN = cell(numN, numT);
 varTablesN = cell(numN, numT);
 weightsTablesNT = cell(numN, numT);
 firstWeightNT = cell(numN, numT);
- 
+maxDiffNT = cell(numN, numT);
+massDiffNT = cell(numN, numT);
+unitsUnrestrNT = cell(numN, numT);
+
 % Loop through the different values of N
 for tID = 1:numT
     for nID=1:numN
@@ -55,7 +58,10 @@ for tID = 1:numT
         biasPointStructsArray = cell(numTargetPoints, 1);  
         varPointStructsArray = cell(numTargetPoints, 1);  
         weightsRegArray = cell(numTargetPoints, 1);  
-        averageFirstWeightArray = cell(numTargetPoints, 1);  
+        averageFirstWeightArray = cell(numTargetPoints, 1);
+        averageMaxDiffArray = cell(numTargetPoints, 1);
+        averageMassDiffArray = cell(numTargetPoints, 1);
+        unitsUnresrtArray = cell(numTargetPoints, 1);
         % Iterate through the target values
         for targetValueID = 1:numTargetPoints
             
@@ -70,10 +76,11 @@ for tID = 1:numT
                 % Save sample and corresponding weights
                 thetaPointArray = errorsArrayTarget;
                 weightsArray = errorsArrayTarget;
+                unitsUnrestrArray = errorsArrayTarget;
             end
             
             % Draw samples with current target value
-            parfor replID=1:numReplications % parfor this
+            for replID=1:numReplications % parfor this
                 
                 %%%%%%%%%%%%%%%%%%%%%%%
                 %%% Data Generation %%%
@@ -137,9 +144,8 @@ for tID = 1:numT
                     % Save sample and corresponding weights
                     thetaPointArray{replID} = thetaTrue;
                     weightsArray{replID} = weightStruct;
-                end
-                if saveUnrestricted
-                    unitsUnrestrArray = unitsUnrestrStruct;
+                    % Save unrestricted units
+                    unitsUnrestrArray{replID} = unitsUnrestrStruct;
                 end
                 
                 
@@ -161,10 +167,14 @@ for tID = 1:numT
             % Process the weights if necessary
             if saveWeights
                 [weightsRegArray{targetValueID}, ...
-                    averageFirstWeightArray{targetValueID}] = ...
-                    uaAverageWeight(paramArray, thetaPointArray,...
-                    weightsArray, ...
-                    theta1Range, 0.1);
+                    averageFirstWeightArray{targetValueID}, ...
+                    averageMaxDiffArray{targetValueID}, ...
+                    averageMassDiffArray{targetValueID}, ...
+                    unitsUnresrtArray{targetValueID}] = ...
+                    uaAverageDiffWeightsUnrestrictedUnits(...
+                        paramArray, thetaPointArray,...
+                        weightsArray, unitsUnrestrArray, ...
+                        theta1Range, 0.1);
             end
         end
         % Glue together the msePointStructsArray into a struct of tables
@@ -180,6 +190,18 @@ for tID = 1:numT
                 uaProcessWeights(paramArray, ...
                 weightsRegArray, ...
                 averageFirstWeightArray...
+                );
+            
+            [unitsUnrestrNT, maxDiffNT{nID, tID}] = ...
+                uaProcessWeights(paramArray, ...
+                unitsUnresrtArray, ...
+                averageMaxDiffArray...
+                );
+            
+             [~, massDiffNT{nID, tID}] = ...
+                uaProcessWeights(paramArray, ...
+                weightsRegArray, ...
+                averageMassDiffArray...
                 );
         end
     end
