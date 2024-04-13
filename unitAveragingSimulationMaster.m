@@ -26,7 +26,7 @@ plotQuietly = false;
 seedCoefficients = 1; 
 
 % Number of replications
-numReplications = 2000;
+numReplications = 3333;
 
 % Saving
 saveWeights = true;
@@ -70,7 +70,7 @@ simulationSettingsCI = ["ci_unimodal","ci_bimodal"];
 % Coefficient on lag
 paramArray{1}.mu = @(theta, x, y) theta(1, :); 
 paramArray{1}.gradient = @(theta, x, y) [1;0]; 
-paramArray{1}.plotDescr = "\mu(\theta_1) = \lambda_1";
+paramArray{1}.plotDescr = "$\mu(\theta_1) = \lambda_1$";
 paramArray{1}.saveName = "lambda";
 
 % Coefficient on exogenous variable
@@ -79,20 +79,13 @@ paramArray{2}.gradient = @(theta, x, y) [0; 1];
 paramArray{2}.plotDescr = "\mu(\theta_1) = \beta_1";
 paramArray{2}.saveName = "beta";
 
-% Long-run effect
-paramArray{3}.mu = @(theta, x, y) theta(2, :)./(1-theta(1, :));
-paramArray{3}.gradient = @(theta, x, y) ...
-    [theta(2, 1)/(1-theta(1, 1))^2; 1/(1-theta(1, 1))]; 
-paramArray{3}.plotDescr = "\mu(\theta_1) = {\beta_1}/{1-\lambda_1}";
-paramArray{3}.saveName = "longRun";
-
 % Forecast
 xForecast = 1;
-paramArray{4}.mu =  @(theta, x, y) ...
+paramArray{3}.mu =  @(theta, x, y) ...
     theta(1, :).*y(end, 1)+theta(2, :)*xForecast; 
-paramArray{4}.gradient = @(theta, x, y) [y(end, 1); 1];  
-paramArray{4}.plotDescr = "\mu(\theta_1) = E(y_{T+1}|y_T, x_T=1)";
-paramArray{4}.saveName = "forecast";
+paramArray{3}.gradient = @(theta, x, y) [y(end, 1); 1];  
+paramArray{3}.plotDescr = "\mu(\theta_1) = E(y_{T+1}|y_T, x_T=1)";
+paramArray{3}.saveName = "forecast";
 
 %% Averaging schemes
 %
@@ -108,8 +101,11 @@ methodsArray{1}.weightFunction = ...
 methodsArray{1}.shortName = 'ind';        
 methodsArray{1}.longName = 'Individual';
 methodsArray{1}.color = [46, 230, 46]/255; % bright blue
+methodsArray{1}.colorBW = [0.01, 0.01, 0.01]; % unplotted in BW
 methodsArray{1}.lineStyle = '-';
 methodsArray{1}.marker = 'none';
+methodsArray{1}.markerSize = 6;
+
 
 
 methodsArray{2}.weightFunction = ...
@@ -119,8 +115,10 @@ methodsArray{2}.weightFunction = ...
 methodsArray{2}.shortName = 'mg';        
 methodsArray{2}.longName = 'Mean Group';
 methodsArray{2}.color = [141, 111, 100]/255; % brown
-methodsArray{2}.lineStyle = '-';
+methodsArray{2}.colorBW = [0.7, 0.7, 0.7];
+methodsArray{2}.lineStyle = '-.';
 methodsArray{2}.marker = 'none';
+methodsArray{2}.markerSize = 6;
 
 methodsArray{3}.weightFunction = ...
     @(y, covars, estCoefs, estCovars, gradientEstimateTarget, ...
@@ -129,8 +127,10 @@ methodsArray{3}.weightFunction = ...
 methodsArray{3}.shortName = 'aic';        
 methodsArray{3}.longName = 'AIC';
 methodsArray{3}.color =   [ 106, 130, 68]/255;
+methodsArray{3}.colorBW = [0.5, 0.5, 0.5];
 methodsArray{3}.lineStyle = '-.';
 methodsArray{3}.marker = '+';
+methodsArray{3}.markerSize = 8;
 
 methodsArray{4}.weightFunction = ...
     @(y, covars, estCoefs, estCovars, gradientEstimateTarget, ...
@@ -139,9 +139,10 @@ methodsArray{4}.weightFunction = ...
 methodsArray{4}.shortName = 'mma';        
 methodsArray{4}.longName = 'MMA';
 methodsArray{4}.color =   [ 55, 130, 125]/255; % greenish-teal
+methodsArray{4}.colorBW = [0.01, 0.01, 0.01]; % unplotted in BW
 methodsArray{4}.lineStyle = '-.';
 methodsArray{4}.marker = '.';
-
+methodsArray{4}.markerSize = 6;
 
 
 methodsArray{5}.weightFunction = ...
@@ -153,8 +154,10 @@ methodsArray{5}.shortName = 'opt';
 methodsArray{5}.longName = 'Generic Optimal'; 
 % The colors and styles should be set for individual units
 methodsArray{5}.color =   [0, 0, 0];
+methodsArray{5}.colorBW = [0, 0, 0];
 methodsArray{5}.lineStyle = '--';
 methodsArray{5}.marker = 'x';
+methodsArray{5}.markerSize = 6;
 
 %% MSE Simulation 
 
