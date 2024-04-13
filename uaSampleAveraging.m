@@ -105,8 +105,7 @@ for parID = 1:numParams
             % modify the unrestrictedBooltargetId vector
             if isfield(approach, "unrestrictedArray")
                 % If the approach is 'top', then further differentiate
-                if (approach.shortName == "top" || ...
-                        approach.shortName == "top10") 
+                if approach.shortName(1:3) == "top" 
                 % Top approaches are based on fixed-N weights
                     targetWeightsSetup ...
                         = weightStruct.(paramName).unrestr(targetID, :)';
