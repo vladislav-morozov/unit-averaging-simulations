@@ -78,6 +78,8 @@ for parID = 1:numParams
     paramName = paramArray{parID}.saveName;
     % Construct all individual estimates
     unitParamEsts = paramStruct.mu(thetaHat, covars, y)';
+    % Extract parameter function
+    paramFun = @(theta) paramArray{parID}.mu(theta, covars, y);
     
     % Loop through target units
     for targetID = 1:numTargets
@@ -116,7 +118,7 @@ for parID = 1:numParams
                 
                 % Extract the unrestricted units
                 unrestrictedBooltargetId = ...
-                    approach.unrestrictedArray{targetID}(targetWeightsSetup);
+                    approach.unrestrictedArray{targetID}(targetWeightsSetup, paramFun);
                 % Save the unrestricted units
                 unitsUnrestrStruct.(paramName).(approachShortName)(...
                     targetID, :) = ...
