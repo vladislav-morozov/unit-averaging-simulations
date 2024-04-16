@@ -1,4 +1,16 @@
-%
+
+% Implementation
+% Loop through (samples), (N, T) pairs
+% Save three cell arrays with those indices
+% 1. trueTheta array -- hold true values
+% 2. weight array -- deeper level ->.parID -> .schemeID -> N_kx1 vector of
+% errors. jth entry corresponds to par(j)th unit being the target. Matches
+% up with the rows of the trueThetas.
+% 2. error array -- deeper level ->.parID -> .schemeID -> .weights and
+% .unrestricted. Both house N_kxN_k matrices, jth rows correspond to the
+% jth unit being the targe
+% The inloop functions return those deeper levels
+
 
 % for (N, T)
 %   for candidate values of (theta_{i1}, theta_{i2})
@@ -21,17 +33,6 @@ numParams = length(paramArray); % obtain number of parameters used
 
 numTargetPoints = length(theta1Range);
 
-% Implementation
-% Loop through (samples), (N, T) pairs
-% Save three cell arrays with those indices
-% 1. trueTheta array -- hold true values
-% 2. weight array -- deeper level ->.parID -> .schemeID -> N_kx1 vector of
-% errors. jth entry corresponds to par(j)th unit being the target. Matches
-% up with the rows of the trueThetas.
-% 2. error array -- deeper level ->.parID -> .schemeID -> .weights and
-% .unrestricted. Both house N_kxN_k matrices, jth rows correspond to the
-% jth unit being the targe
-% The inloop functions return those deeper levels
 
 
 %% Main Loop
@@ -80,7 +81,7 @@ for tID = 1:numT
             end
             
             % Draw samples with current target value
-            for replID=1:numReplications % parfor this
+            parfor replID=1:numReplications % parfor this
                 
                 %%%%%%%%%%%%%%%%%%%%%%%
                 %%% Data Generation %%%
@@ -207,12 +208,6 @@ for tID = 1:numT
     end
 end
 %%
-% Extract range of methods for plotting
-optimalSchemes = ...
-    uaOptimalSchemes(randn(2, N), randn(2, N), randn(N, 1), ...
-    'firstOnly', averagingIncludeBool);
-allMethodsArray = ...
-    uaAddOptimalToMethodsStruct(methodsArray, optimalSchemes);
 
 
 %% Save results
