@@ -76,7 +76,7 @@ paramArray{1}.saveName = "lambda";
 % Coefficient on exogenous variable
 paramArray{2}.mu = @(theta, x, y) theta(2, :);
 paramArray{2}.gradient = @(theta, x, y) [0; 1]; 
-paramArray{2}.plotDescr = "\mu(\theta_1) = \beta_1";
+paramArray{2}.plotDescr = "$\mu(\theta_1) = \beta_1$";
 paramArray{2}.saveName = "beta";
 
 % Forecast
@@ -84,7 +84,7 @@ xForecast = 1;
 paramArray{3}.mu =  @(theta, x, y) ...
     theta(1, :).*y(end, 1)+theta(2, :)*xForecast; 
 paramArray{3}.gradient = @(theta, x, y) [y(end, 1); 1];  
-paramArray{3}.plotDescr = "\mu(\theta_1) = E(y_{T+1}|y_T, x_T=1)";
+paramArray{3}.plotDescr = "$\mu(\theta_1) = E(y_{1T+1}|y_T, x_{1T+1}=1)$";
 paramArray{3}.saveName = "forecast";
 
 %% Averaging schemes
@@ -100,8 +100,8 @@ methodsArray{1}.weightFunction = ...
             double(1:size(estCoefs, 2) == targetID)';
 methodsArray{1}.shortName = 'ind';        
 methodsArray{1}.longName = 'Individual';
-methodsArray{1}.color = [46, 230, 46]/255; % bright blue
-methodsArray{1}.colorBW = [0.01, 0.01, 0.01]; % unplotted in BW
+methodsArray{1}.color = [0.01, 0.01, 0.05]; 
+methodsArray{1}.colorBW = [0.01, 0.01, 0.01];  
 methodsArray{1}.lineStyle = '-';
 methodsArray{1}.marker = 'none';
 methodsArray{1}.markerSize = 6;
@@ -114,8 +114,8 @@ methodsArray{2}.weightFunction = ...
             ones(size(estCoefs, 2), 1)/size(estCoefs, 2);
 methodsArray{2}.shortName = 'mg';        
 methodsArray{2}.longName = 'Mean Group';
-methodsArray{2}.color = [141, 111, 100]/255; % brown
-methodsArray{2}.colorBW = [0.7, 0.7, 0.7];
+methodsArray{2}.color = [0.7, 0.7, 0.7]; %[141, 111, 100]/255; % brown
+methodsArray{2}.colorBW = [0.79, 0.79, 0.75];
 methodsArray{2}.lineStyle = '-.';
 methodsArray{2}.marker = 'none';
 methodsArray{2}.markerSize = 6;
@@ -126,7 +126,7 @@ methodsArray{3}.weightFunction = ...
             uaWeightsAICMMA(estCoefs, y, covars, 'aic');
 methodsArray{3}.shortName = 'aic';        
 methodsArray{3}.longName = 'AIC';
-methodsArray{3}.color =   [ 106, 130, 68]/255;
+methodsArray{3}.color =  [0.44, 0.44, 0.4]; % [ 106, 130, 68]/255;
 methodsArray{3}.colorBW = [0.5, 0.5, 0.5];
 methodsArray{3}.lineStyle = '-.';
 methodsArray{3}.marker = '+';
