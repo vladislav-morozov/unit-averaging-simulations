@@ -6,8 +6,6 @@
 %
 % Project Name: Unit Averaging for Heterogeneous Panels
 % Developed by: Christian Brownlees, Vladislav Morozov
-% MATLAB Version: R2022b
-%
 %
 % The model is a heterogeneous panel ARX(1) model of the form:
 %   y_{it} = theta_{i1} y_{it-1} + theta_{i2} x_{it} + u_{it}
@@ -24,6 +22,7 @@
 %
 % IMPLEMENTATION NOTES: 
 % -- The parameters are stored as cells in the cell array paramArray
+%    Implemented before improvement in performance of matlab classes
 % -- Each parameters is defined by a struct. The fields are the function
 %    mu, the gradient, the name of the parameter for the plot, and the name
 %    to use when saving
@@ -34,8 +33,6 @@
 %    plots
 % -- the script detects the length of the paramArray and loops through
 %    all the parameters
-
- 
 
 % Coefficient on lag
 paramArray{1}.mu = @(theta, x, y) theta(1, :); 
@@ -50,7 +47,7 @@ paramArray{2}.plotDescr = "$\mu(\theta_1) = \beta_1$";
 paramArray{2}.saveName = "beta";
 
 % Forecast
-xForecast = 1;
+xForecast = 1; % value of exogenous variable to use in the forecast
 paramArray{3}.mu =  @(theta, x, y) ...
     theta(1, :).*y(end, 1)+theta(2, :)*xForecast; 
 paramArray{3}.gradient = @(theta, x, y) [y(end, 1); 1];  

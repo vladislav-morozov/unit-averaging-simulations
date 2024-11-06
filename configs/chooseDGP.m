@@ -5,7 +5,6 @@
 %
 % Project Name: Unit Averaging for Heterogeneous Panels
 % Developed by: Christian Brownlees, Vladislav Morozov
-% MATLAB Version: R2022b
  
 % Implemented DGPs: "unimodal", "bimodal", "bimodal_close"
 % If a list of DGPs is supplied, all of them will be ran in turn.
