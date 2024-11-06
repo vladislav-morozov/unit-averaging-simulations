@@ -22,10 +22,10 @@
 %
 % IMPLEMENTATION NOTES: 
 % -- The parameters are stored as cells in the cell array paramArray
-%    Implemented before improvement in performance of matlab classes
 % -- Each parameters is defined by a struct. The fields are the function
 %    mu, the gradient, the name of the parameter for the plot, and the name
-%    to use when saving
+%    to use when saving.
+%    Implemented before improvement in performance of matlab classes
 % -- the function mu and the gradient take both the coefficients and the
 %    full data vectors y and x. 
 % -- the plotting functions will use the description and name of the
@@ -34,19 +34,19 @@
 % -- the script detects the length of the paramArray and loops through
 %    all the parameters
 
-% Coefficient on lag
+%% Coefficient on lag
 paramArray{1}.mu = @(theta, x, y) theta(1, :); 
 paramArray{1}.gradient = @(theta, x, y) [1;0]; 
 paramArray{1}.plotDescr = "$\mu(\theta_1) = \lambda_1$";
 paramArray{1}.saveName = "lambda";
 
-% Coefficient on exogenous variable
+%% Coefficient on exogenous variable
 paramArray{2}.mu = @(theta, x, y) theta(2, :);
 paramArray{2}.gradient = @(theta, x, y) [0; 1]; 
 paramArray{2}.plotDescr = "$\mu(\theta_1) = \beta_1$";
 paramArray{2}.saveName = "beta";
 
-% Forecast
+%% One-step ahead forecast
 xForecast = 1; % value of exogenous variable to use in the forecast
 paramArray{3}.mu =  @(theta, x, y) ...
     theta(1, :).*y(end, 1)+theta(2, :)*xForecast; 

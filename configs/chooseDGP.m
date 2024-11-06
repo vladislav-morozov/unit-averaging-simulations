@@ -9,8 +9,8 @@
 % Implemented DGPs: "unimodal", "bimodal", "bimodal_close"
 % If a list of DGPs is supplied, all of them will be ran in turn.
 
-% Set DGPs for evaluating the mean squared error of unit averaging
+%% Set DGPs for evaluating the mean squared error of unit averaging
 simulationSettings = ["unimodal", "bimodal", "bimodal_close"];
 
-% Set DGPs for evaluating the coverage of confidence intervals
+%% Set DGPs for evaluating the coverage of confidence intervals
 simulationSettingsCI = ["ci_unimodal","ci_bimodal"];
