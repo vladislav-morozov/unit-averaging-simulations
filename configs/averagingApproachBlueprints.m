@@ -1,88 +1,113 @@
 % ===========================================================
 % File: averagingApproachBlueprints.m
-% Description: This script implements blueprints for averaging approaches
+% Description: This script defines various unit averaging approaches
+%              for heterogeneous panel data.
 % ===========================================================
 %
 % Project Name: Unit Averaging for Heterogeneous Panels
-% Developed by: Christian Brownlees, Vladislav Morozovn.
+% Developed by: Christian Brownlees, Vladislav Morozov
 %
-%  
-% IMPLEMENTATION NOTES:
-% - The generic optimal scheme is used as a blueprint for other optimal
-%   schemes. As some large-N schemes depend on the data, these must be
-%   created for each given sample. The different schemes are implemented by
-%   the createOptimalSchemes function
-% - Each method is defined by a struct. The fields are the weight function,
-%   names to use for plotting, and plotting parameters (colors, line
-%   styles)
-%   Implemented before improvement in performance of Matlab classes
+% Implementation Notes:
+%   - This script sets up a series of averaging methods using the 
+%     generic optimal scheme as a basis for customization.
+%   - Some large-N schemes require re-creation for each sample due to 
+%     data dependencies and are implemented by the `createOptimalSchemes` 
+%     function.
+%   - Each method is represented by a struct with fields:
+%       - weightFunction: Function for computing weights
+%       - shortName: Short label for plots
+%       - longName: Full name for legend/plotting
+%       - color, colorBW: Colors for color and black-and-white plots
+%       - lineStyle, marker, markerSize: Plotting style parameters
+%
+% ===========================================================
 
-%% Individual estimator
+%% Averaging Method 1: Individual Estimator
+% Weight function for individual estimators (selects individual unit)
 methodsArray{1}.weightFunction = ...
     @(y, covars, estCoefs, estCovars, gradientEstimateTarget, ...
       targetID, unrestrictedBooltargetId) ...
             double(1:size(estCoefs, 2) == targetID)';
-methodsArray{1}.shortName = 'ind';        
+
+% Plotting names for the individual estimator
+methodsArray{1}.shortName = 'ind';
 methodsArray{1}.longName = 'Individual';
-methodsArray{1}.color = [0.01, 0.01, 0.05]; 
-methodsArray{1}.colorBW = [0.01, 0.01, 0.01];  
+
+% Plotting parameters for individual estimator
+methodsArray{1}.color = [0.01, 0.01, 0.05];
+methodsArray{1}.colorBW = [0.01, 0.01, 0.01];
 methodsArray{1}.lineStyle = '-';
 methodsArray{1}.marker = 'none';
 methodsArray{1}.markerSize = 6;
 
-
-%%  Mean group
+%% Averaging Method 2: Mean Group
+% Weight function for mean group estimator (uniform weights)
 methodsArray{2}.weightFunction = ...
     @(y, covars, estCoefs, estCovars, gradientEstimateTarget, ...
       targetID, unrestrictedBooltargetId) ...
-            ones(size(estCoefs, 2), 1)/size(estCoefs, 2);
-methodsArray{2}.shortName = 'mg';        
+            ones(size(estCoefs, 2), 1) / size(estCoefs, 2);
+
+% Plotting names for the mean group estimator
+methodsArray{2}.shortName = 'mg';
 methodsArray{2}.longName = 'Mean Group';
-methodsArray{2}.color = [0.7, 0.7, 0.7]; 
+
+% Plotting parameters for mean group estimator
+methodsArray{2}.color = [0.7, 0.7, 0.7];
 methodsArray{2}.colorBW = [0.79, 0.79, 0.75];
 methodsArray{2}.lineStyle = '-.';
 methodsArray{2}.marker = 'none';
 methodsArray{2}.markerSize = 6;
 
-
-%% Exponential AIC weights
+%% Averaging Method 3: Exponential AIC Weights
+% Weight function based on AIC (Akaike Information Criterion) weights
 methodsArray{3}.weightFunction = ...
     @(y, covars, estCoefs, estCovars, gradientEstimateTarget, ...
       targetID, unrestrictedBooltargetId) ...
             uaWeightsAICMMA(estCoefs, y, covars, 'aic');
-methodsArray{3}.shortName = 'aic';        
+
+% Plotting names for AIC-based method
+methodsArray{3}.shortName = 'aic';
 methodsArray{3}.longName = 'AIC';
-methodsArray{3}.color =  [0.44, 0.44, 0.4];  
+
+% Plotting parameters for AIC weights
+methodsArray{3}.color = [0.44, 0.44, 0.4];
 methodsArray{3}.colorBW = [0.5, 0.5, 0.5];
 methodsArray{3}.lineStyle = '-.';
 methodsArray{3}.marker = '+';
 methodsArray{3}.markerSize = 8;
 
-
-%% Mallows averaging
+%% Averaging Method 4: Mallows Averaging (MMA)
+% Weight function based on Mallows Model Averaging (MMA)
 methodsArray{4}.weightFunction = ...
     @(y, covars, estCoefs, estCovars, gradientEstimateTarget, ...
       targetID, unrestrictedBooltargetId) ...
             uaWeightsAICMMA(estCoefs, y, covars, 'mma');
-methodsArray{4}.shortName = 'mma';        
+
+% Plotting names for Mallows averaging
+methodsArray{4}.shortName = 'mma';
 methodsArray{4}.longName = 'MMA';
-methodsArray{4}.color =   [ 55, 130, 125]/255; 
-methodsArray{4}.colorBW = [0.01, 0.01, 0.01]; % unplotted in BW
+
+% Plotting parameters for Mallows averaging
+methodsArray{4}.color = [55, 130, 125] / 255;
+methodsArray{4}.colorBW = [0.01, 0.01, 0.01]; % Not plotted in BW
 methodsArray{4}.lineStyle = '-.';
 methodsArray{4}.marker = '.';
 methodsArray{4}.markerSize = 6;
 
-
-%% Generic optimal approach
+%% Averaging Method 5: Generic Optimal Approach
+% Weight function for generic optimal averaging approach
 methodsArray{5}.weightFunction = ...
     @(y, covars, estCoefs, estCovars, gradientEstimateTarget, ...
       targetID, unrestrictedBooltargetId) ...
         uaWeightsOptimal(estCoefs, estCovars, gradientEstimateTarget, ...
                          targetID, unrestrictedBooltargetId);
-methodsArray{5}.shortName = 'opt';                   
-methodsArray{5}.longName = 'Generic Optimal'; 
-% The colors and styles should be set for individual units, see
-methodsArray{5}.color =   [0, 0, 0];
+
+% Plotting names for generic optimal approach
+methodsArray{5}.shortName = 'opt';
+methodsArray{5}.longName = 'Generic Optimal';
+
+% Plotting parameters for generic optimal approach
+methodsArray{5}.color = [0, 0, 0];
 methodsArray{5}.colorBW = [0, 0, 0];
 methodsArray{5}.lineStyle = '--';
 methodsArray{5}.marker = 'x';
