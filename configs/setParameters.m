@@ -22,7 +22,7 @@
 % Setting-Specific Parameters:
 %   Parameters vary by simulation setting (e.g., theta1Range, sample sizes)
 %
-
+% ===========================================================
 %% Common Parameters
 % Variance of the noise term u_{it}
 varNoiseVar = 1;
