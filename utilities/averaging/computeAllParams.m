@@ -16,7 +16,7 @@ function paramValues = computeAllParams(paramArray, thetas, covars, y)
 %
 % Returns:
 %     paramValues (struct): A struct where each field is named according to 
-%         'paramName' in paramArray and contains the corresponding computed 
+%         'saveName' in paramArray and contains the corresponding computed 
 %          parameter value.
 %
 % Example:
@@ -41,7 +41,7 @@ paramValues = struct();
 % Loop through each parameter
 for paramID = 1:numParams
     % Extract the name of the current parameter
-    paramName = paramArray{paramID}.paramName;
+    paramName = paramArray{paramID}.saveName;
     
     % Compute the parameter value using the specified function 'mu'
     paramValues.(paramName) = paramArray{paramID}.mu(thetas, covars, y);
