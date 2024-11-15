@@ -33,7 +33,7 @@ close all
 
 % Load in folders with required functions and scripts
 addpath('averagingFunctions') 
-addpath('utilities') % other utilities
+addpath(genpath('utilities')) % other utilities
 addpath('configs') % Parameters of simulation
 addpath('simulationScriptsFunctions') 
 
