@@ -71,7 +71,7 @@ for tID = 1:numT
                     T, replID);
                 
                 % Compute the true values of parameters for unit 1
-                targetParams = uaComputeAllParams(...
+                targetParams = computeAllParams(...
                     paramArray, thetaTrue(:, 1), ...
                     covars(:, 1, :), y(:, 1));
                 
@@ -88,7 +88,7 @@ for tID = 1:numT
                         stationaryBootstrap(y, covars, ceil(T^(1/3)), T);
                     
                     % Reestimate
-                    [thetaHatBs, estVarianceArrayBs] = uaOLS(yBs, covarsBs);
+                    [thetaHatBs, estVarianceArrayBs] = OLS(yBs, covarsBs);
                     
                     % Create optimal strategies for this subsample
                     optimalSchemes = ...

@@ -126,7 +126,7 @@ for tID = 1:numT
                     T, replID);
                 
                 % Compute the true values of parameters for unit 1
-                targetParamsPoint{replID} = uaComputeAllParams(...
+                targetParamsPoint{replID} = computeAllParams(...
                     paramArray, thetaTrue(:, 1), ...
                     covars(:, 1, :), y(:, 1));
                 
@@ -135,14 +135,14 @@ for tID = 1:numT
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 
                 % Estimate coefficients and variances
-                [thetaHat, estVarianceArray] = uaOLS(y, covars);
+                [thetaHat, estVarianceArray] = OLS(y, covars);
                 
                 
                 %%%%%%%%%%%%%%%%%%%%%%
                 %%% Unit Averaging %%%
                 %%%%%%%%%%%%%%%%%%%%%%
                 
-                % Create optimal strategies for this subsamples
+                % Create optimal unit averaging schemes for this subsample
                 optimalSchemes = ...
                     uaOptimalSchemes(...
                         thetaHat, thetaTrue, thetaClassLabels, ...
