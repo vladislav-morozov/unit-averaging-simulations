@@ -152,7 +152,7 @@ for tID = 1:numT
                 % Preprocess the methods array: expand generic optimal position to
                 % use the restrictions imposed by optimalSchemes
                 preparedMethodsArray = ...
-                    uaAddOptimalToMethodsStruct(methodsArray, optimalSchemes);
+                    addOptimalToMethodsStruct(methodsArray, optimalSchemes);
                 
                 % Apply averaging
                 [errorStruct, estStruct, weightStruct, unitsUnrestrStruct] = ...
