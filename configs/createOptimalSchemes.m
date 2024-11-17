@@ -357,9 +357,6 @@ optimalSchemes{19}.color =   [38, 100, 200]/255;
 optimalSchemes{19}.lineStyle = ':'; 
 optimalSchemes{19}.marker = '^';
 
-% Extract only the desired averaging schemes
-optimalSchemes = optimalSchemes(averagingIncludeBool);
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Large-N: Coefficient Oracles %%%
@@ -504,6 +501,15 @@ optimalSchemes{27}.colorBW = [0.33, 0.33, 0.33];
 optimalSchemes{27}.lineStyle = '--'; 
 optimalSchemes{27}.marker = 'square';
 optimalSchemes{27}.markerSize = 4;
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Export selected approaches %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Extract only the desired averaging schemes
+optimalSchemes = optimalSchemes(averagingIncludeBool);
+
 end
 
 

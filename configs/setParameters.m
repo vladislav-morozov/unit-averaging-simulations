@@ -30,10 +30,13 @@ varNoiseVar = 1;
 % Variance of exogenous covariates x_{it}
 varianceX = 1;
 
+% Confidence interval size
+alphaCI = 0.05;
+
 % Boolean vector: determines which unit averaging approaches to include
 % By default, all implemented approaches are considered, and modified
 % in specific settings (e.g., CI evaluation for confidence intervals).
-averagingIncludeBool = true(1, 19);
+averagingIncludeBool = true(1, 27);
 
 %% Setting-Specific Parameters
 % Configure parameters based on the selected simulation setting
