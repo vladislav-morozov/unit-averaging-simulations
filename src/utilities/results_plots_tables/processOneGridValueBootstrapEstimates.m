@@ -1,7 +1,7 @@
 function bsEstTableStruct = ...
-    processOneValueEstimates(estArrayTarget, paramArray)
-% processOneValueEstimates Converts bootstrap parameter estimates into
-% structured tables.
+    processOneGridValueBootstrapEstimates(estArrayTarget, paramArray)
+% processOneGridValueBootstrapEstimates Converts bootstrap parameter
+% estimates into structured tables.
 %
 % This function processes bootstrap estimates for multiple parameters and
 % averaging approaches, organizing the results into a structured format for
