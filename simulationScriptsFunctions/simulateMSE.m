@@ -172,7 +172,7 @@ for tID = 1:numT
                     unitsUnrestrArray{replID} = unitsUnrestrStruct;
                 end
                 
-                
+                % Print iteration information
                 disp(['N=', num2str(N), ...
                       ', T=', num2str(T), ...
                       ', Target: ', num2str(targetValueID),...
@@ -180,6 +180,10 @@ for tID = 1:numT
                       ', Replication ', num2str(replID)])
             end
             
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %%% Processing for current grid point %%%
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
             % Compute MSE for current target value
             [msePointStructsArray{targetValueID},...
                biasPointStructsArray{targetValueID},...
@@ -188,7 +192,7 @@ for tID = 1:numT
                 errorsArrayTarget, estArrayTarget, ...
                 paramArray, targetParamsPoint);
             
-            % Process the weights if necessary
+            % Process the weights if these are saved
             if saveWeights
                 [weightsRegArray{targetValueID}, ...
                     averageFirstWeightArray{targetValueID}, ...
@@ -201,6 +205,11 @@ for tID = 1:numT
                         theta1Range, 0.1);
             end
         end
+
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%% Processing for the whole DGP setting %%%
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
         % Glue together the msePointStructsArray into a struct of tables
         [mseTablesNT{nID, tID}, ...
             biasTablesNT{nID, tID}, ...
