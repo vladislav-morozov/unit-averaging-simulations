@@ -31,12 +31,9 @@ clc
 clear variables
 close all
 
-% Load in folders with required functions and scripts
-addpath('averagingFunctions') 
-addpath(genpath('utilities')) % other utilities
-addpath('configs') % Parameters of simulation
-addpath('simulationScriptsFunctions') 
-
+% Load in folders with required functions and scripts 
+addpath(genpath('src'))
+addpath(genpath('scripts')) 
 %% Set the parameters of the simulation
 
 % Whether plots should be shown or saved without showing
