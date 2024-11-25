@@ -144,11 +144,11 @@ for tID = 1:numT
                 lengthArrayTarget, paramArray); 
         end
         
-        % Glue together the coverages into a table
-        [coverageNT{nID, tID}, lengthNT{nID, tID}] = ...
-            uaProcessMSE(coveragePointsArray, lengthPointsArray, ...
-            coveragePointsArray, paramArray);
-        
+        % Combine coverages and lengths into a table
+        coverageNT{nID, tID} = ...
+             combineAllPointsTable(coveragePointsArray, paramArray);     
+        lengthNT{nID, tID} = ...
+             combineAllPointsTable(lengthPointsArray, paramArray);
     end
 end
 %%
