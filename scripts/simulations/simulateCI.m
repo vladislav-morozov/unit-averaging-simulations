@@ -151,34 +151,11 @@ for tID = 1:numT
              combineAllPointsTable(lengthPointsArray, paramArray);
     end
 end
-%%
-% Extract range of methods for plotting
-optimalSchemes = ...
-    createOptimalSchemes(randn(2, N), randn(2, N), randn(N, 1), ...
-    'firstOnly', averagingIncludeBool);
-allMethodsArray = ...
-    addOptimalToMethodsStruct(methodsArray, optimalSchemes);
-    
 
 %% Save results
 
-titleN = "";
-for nID=1:numN
-    titleN = titleN + "-" + valuesN(nID) ;
-end
-titleT = "";
-for tID=1:numT
-    titleT = titleT + "-" + valuesT(tID);
-end
+% Generate file name
+fileSaveName = makeOutputFileName('CI', simulationSetting, numReplicationsCI, valuesN, valuesT);
 
-fileSaveName =   "Outputs/"+...
-    simulationSetting + "/" + ...
-    "Replication-" + num2str(numReplicationsCI)+ ...
-    "N" + titleN + ...
-    "T" + titleT +...
-    "weights" + num2str(saveWeights) + ...
-    "unrestricted" + num2str(saveUnrestricted) + ...
-    ".mat";
-
-
+% Save file
 save(fileSaveName)

@@ -238,27 +238,7 @@ end
 close all
 
 % Create file name based on simulation parameters
-
-% Generate parts of the title that depend on (N, T)
-titleN = "";
-for nID=1:numN
-    titleN = titleN + "-" + valuesN(nID) ;
-end
-
-titleT = "";
-for tID=1:numT
-    titleT = titleT + "-" + valuesT(tID);
-end
-
-% Create the file title
-fileSaveName =   "Outputs/"+...
-    simulationSetting + "/" + ...
-    "Replication-" + num2str(numReplicationsMSE)+ ...
-    "N" + titleN + ...
-    "T" + titleT +...
-    "weights" + num2str(saveWeights) + ...
-    "unrestricted" + num2str(saveUnrestricted) + ...
-    ".mat";
+fileSaveName = makeOutputFileName('MSE', simulationSetting, numReplicationsMSE, valuesN, valuesT);
 
 % Export simulation results
 save(fileSaveName)
