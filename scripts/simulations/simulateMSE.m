@@ -91,7 +91,7 @@ for tID = 1:numT
             end
             
             % Draw samples with current target value
-            for replID=1:numReplicationsMSE 
+            parfor replID=1:numReplicationsMSE 
                 
                 % --- Data Generation ---
                 % Draw coefficients and error-term variances

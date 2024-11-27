@@ -35,14 +35,14 @@
 %% Simulation Parameters and Initialization
 
 % Extract dimensions of the vectors defining the simulation
-numT = length(valuesT); % Number of time periods
-numN = length(valuesN); % Number of cross-sectional units
-numParams = length(paramArray); % Number of parameters considered
-numTargetPoints = length(theta1Range); % Grid points for target theta_{i1}
+numT = length(valuesT);                % Number of time periods
+numN = length(valuesN);                % Number of units
+numParams = length(paramArray);        % Number of parameters
+numTargetPoints = length(theta1Range); % Num of grid points for theta_{i1}
  
 % Preallocate results arrays for CI coverage and length
-coverageNT = cell(numN, numT);
-lengthNT = cell(numN, numT);
+coverageNT = cell(numN, numT);         % Coverage results
+lengthNT = cell(numN, numT);           % Length results
 
 %% Main simulation loop
  
@@ -68,7 +68,7 @@ for tID = 1:numT
             lengthArrayTarget = coverageArrayTarget;
             
             % Draw samples with current target value
-            for replID=1:numReplicationsCI
+            parfor replID=1:numReplicationsCI
                 
                 % --- Data Generation ---
                 % Draw coefficients and error-term variances
