@@ -11,6 +11,9 @@
 % Model: Heterogeneous panel ARX(1) model
 %   y_{it} = theta_{i1} y_{it-1} + theta_{i2} x_{it} + u_{it}
 %
+%
+% This file simulates the MSE, weight, and unrestricted properties of the
+% various unit averaging approaches. 
 % Pseudocode for the simulation loop:
 %
 % for (N, T)
@@ -22,18 +25,16 @@
 %           conduct averaging on first unit
 %           record errors of approaches
 %       estimate MSE, bias, and variance for candidate value
-%
-% Implementation notes:
-% Loop through (samples), (N, T) pairs
-% Save three cell arrays with those indices
-% 1. trueTheta array -- hold true values
-% 2. weight array -- deeper level ->.parID -> .schemeID -> N_kx1 vector of
-% errors. jth entry corresponds to par(j)th unit being the target. Matches
-% up with the rows of the trueThetas.
-% 2. error array -- deeper level ->.parID -> .schemeID -> .weights and
-% .unrestricted. Both house N_kxN_k matrices, jth rows correspond to the
-% jth unit being the targe
-% The inloop functions return those deeper levels
+%       if necessary, estimate weight properties
+%   process results for all grid points 
+% 
+% Notes regarding format of results
+% 1. Results are saved in cell arrays indexed by combinations of (N, T)
+% 2. Results come in two formats
+%     - Tables with columns indexing unit averaging approaches. Applies to 
+%       MSE, bias, variance, differences in masses between unrestricted and
+%       restricted units, average own weight
+%     - Structs indexed by averaging approaches 
 
 % ===========================================================
 %% Extract dimensions of vectors that define the simulation
