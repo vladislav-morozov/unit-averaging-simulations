@@ -1,11 +1,11 @@
-function [combinedTableStruct] = combineAllPointsTable(sampleStructsArray, paramArray)
+function [combinedTableStruct] = ...
+    combineAllPointsTable(sampleStructsArray, paramArray)
 % combineAllPointsTable Combines tables across all grid points of theta
 % into a single table.
 %
 % This function merges tables corresponding to different grid points for
-% each parameter into a single comprehensive table. It is typically used
-% for aggregating results for metrics such as MSE, bias, variance,
-% coverage, and interval lengths.
+% each parameter into a single comprehensive table. Can be used for MSE,
+% bias, variance, coverage, and interval lengths.
 %
 % Args:
 %     sampleStructsArray (cell array): Each cell corresponds to a grid 
