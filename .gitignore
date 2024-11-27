@@ -3,5 +3,4 @@
 *.jpg
 *.eps
 *.mat
-*.asv
-z_old/*
+*.asv 
