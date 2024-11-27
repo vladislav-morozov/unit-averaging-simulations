@@ -50,11 +50,11 @@ numTargetPoints = length(theta1Range);
 
 %% Allocate arrays that will hold the results
 
-% MSEs
+% MSE
 mseTablesNT = cell(numN, numT);
-% Biases
+% Bias
 biasTablesNT = cell(numN, numT);
-% Variances
+% Variance
 varTablesNT = cell(numN, numT);
 % All weights
 weightsTablesNT = cell(numN, numT);
@@ -137,7 +137,6 @@ for tID = 1:numT
                 % Estimate coefficients and variances
                 [thetaHat, estVarianceArray] = OLS(y, covars);
                 
-                
                 %%%%%%%%%%%%%%%%%%%%%%
                 %%% Unit Averaging %%%
                 %%%%%%%%%%%%%%%%%%%%%%
@@ -215,25 +214,18 @@ for tID = 1:numT
         varTablesNT{nID, tID} = ...
              combineAllPointsTable(varPointStructsArray, paramArray);
          
+        % Process weights and unrestricted units results if necessary
         if saveWeights
-            % Glue together weight arrays
-            [weightsTablesNT{nID, tID}, firstWeightNT{nID, tID}] = ...
-                uaProcessWeights(paramArray, ...
-                weightsRegArray, ...
-                averageFirstWeightArray...
-                );
-            
-            [unitsUnrestrNT{nID, tID}, maxDiffNT{nID, tID}] = ...
-                uaProcessWeights(paramArray, ...
-                unitsUnresrtArray, ...
-                averageMaxDiffArray...
-                );
-            
-             [~, massDiffNT{nID, tID}] = ...
-                uaProcessWeights(paramArray, ...
-                weightsRegArray, ...
-                averageMassDiffArray...
-                );
+            weightsTablesNT{nID, tID} = ...
+                combineAllPointsWeightsUnitsTables(weightsRegArray, paramArray);
+            firstWeightNT{nID, tID} = ...
+                combineAllPointsWeightsUnitsTables(averageFirstWeightArray, paramArray);
+            unitsUnrestrNT{nID, tID} = ...
+                combineAllPointsWeightsUnitsTables(unitsUnresrtArray, paramArray);
+            maxDiffNT{nID, tID} = ...
+                combineAllPointsWeightsUnitsTables(averageMaxDiffArray, paramArray);
+            massDiffNT{nID, tID} = ...
+                combineAllPointsWeightsUnitsTables(averageMassDiffArray, paramArray);
         end
     end
 end
@@ -245,6 +237,7 @@ end
 close all
 
 % Create file name based on simulation parameters
+
 % Generate parts of the title that depend on (N, T)
 titleN = "";
 for nID=1:numN
