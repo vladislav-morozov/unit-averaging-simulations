@@ -106,8 +106,8 @@ thetaGrid = theta1Range;
 %% Output Directory Setup
 % Create directories for saving simulation results and figures if they
 % don't exist
-outputFolderName = fullfile('Outputs', simulationSetting);
-figureFolderName = fullfile('Figures', simulationSetting);
+outputFolderName = fullfile('results', 'simulations');
+figureFolderName = fullfile('results', 'figures');
 
 % Suppress directory creation warnings if directories already exist
 warning('off', 'MATLAB:MKDIR:DirectoryExists');
