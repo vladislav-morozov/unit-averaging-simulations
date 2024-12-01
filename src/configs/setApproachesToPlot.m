@@ -43,9 +43,6 @@ approachesToPlotClusterComp = ...
 % Clustering based on the parameters
 approachesToPlotFocusClusterComp = ...
     ["focus_cluster_2", "focus_cluster_4", "focus_cluster_8"];
-% Special plot: just the Mallows averaging
-approachesToPlotMMA = ...
-    "mma";
 
 % If the approach is multimodal, add information on true classes
 if coefApproach ~= "unimodal"
@@ -92,7 +89,6 @@ approachOARenamesCluster.cluster_coef_4 = ...
 approachOARenamesRandom = struct();
 approachOARenamesFocusCluster = struct();
 approachOARenamesOracleFocus = struct();
-approachOARenamesMMA = struct();
 
 % Renames for alternative possibilities of picking large-N approaches
 approachGridRenames.focus_oracle_10_pct = "Large-N (most similar)";
@@ -136,10 +132,6 @@ plotName{7} = "comp_focus_oracle";
 lineSets{8} = approachesAlt2;
 nameSets{8} = approachGridRenames;
 plotName{8} = "diff_lines";
-
-lineSets{9} = approachesToPlotMMA;
-nameSets{9} = approachOARenamesMMA;
-plotName{9} = "mma";
 
 %% Extract the approaches that were computed with the current settings
 
