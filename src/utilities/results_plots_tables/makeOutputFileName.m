@@ -1,5 +1,6 @@
 function fileName = ...
-    makeOutputFileName(leadingStrict, simulationSetting, numReplications, valuesN, valuesT)
+    makeOutputFileName(leadingString, simulationSetting, numReplications, ...
+                       valuesN, valuesT)
     % makeOutputFileName Generates a standardized file name for simulation
     % output.
     %
@@ -8,23 +9,18 @@ function fileName = ...
     % follows a specific format to capture key simulation details.
     %
     % Args:
-    %     thetaSampler (dataSampler): Instance of the dataSampler class 
-    %         representing the distribution for theta coefficients.
-    %     uSampler (dataSampler): Instance of the dataSampler class 
-    %         representing the distribution for u (error terms).
-    %     N (int): Cross-sectional sample size (number of individuals).
-    %     T (int): Number of time periods (cross-sections).
-    %     numSamples (int): Number of Monte Carlo samples in the simulation
-    %     simContext (str): String identifier for the simulation context 
-    %         (e.g., 'baseline' or other experiment descriptors).
+    %     leadingString (string): String to insert at the beginning of the
+    %         file name.
+    %     simulationSetting (string): Name of the data-generating process.
+    %     numReplications (int): Number of Monte Carlo samples drawn.
+    %     valuesN (vector): Vector of cross-sectional sizes used.
+    %     valuesT (vector): Vector of time series sizes used.
     %
     % Returns:
     %     fileName (str): Constructed file name including all relevant 
-    %         parameters, saved in the 'outputs' folder, with format:
-    %         'outputs/[simContext]_samples_[numSamples]_N_[N]_T_[T]_...
-    %          F_[thetaDistr]_[thetaParam]_[thetaParamValue]_...
-    %          G_[uDistr]_[uParam]_[uParamValue].mat'
-
+    %         parameters, saved in the 'results/simulation' folder. Format:
+    %         'results/simulation/[leadingString][simulationSetting]_...
+    %         [numReplications]_N-[valuesN]_T-[valuesT].mat'
     
     % Numbers of dimensions of samples drawn
     numT = length(valuesT);
@@ -43,7 +39,7 @@ function fileName = ...
 
     % Construct the file name using strings with specified structure
     fileName = sprintf('results/simulations/%s%s_%d_N%s_T%s.mat', ...
-        leadingStrict, ...          % Insert a leading string
+        leadingString, ...          % Insert a leading string
         simulationSetting, ...      % Simulation context
         numReplications,    ...     % Number of samples
         titleN, titleT);            % Sample sizes and cross-sections 
