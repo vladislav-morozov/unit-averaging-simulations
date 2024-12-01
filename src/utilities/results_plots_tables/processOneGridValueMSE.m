@@ -78,7 +78,7 @@ function [msePointStruct, biasPointStruct, varPointStruct] = ...
         mseEst = trimmean(sampleErrors.^2, meanTrimPct);
         biasEst = trimmean(sampleEst, meanTrimPct) - ...
                     trimmean(sampleTarget, meanTrimPct);
-        varEst = var(sampleEst);
+        varEst = var(sampleEst, "omitnan");
 
         % Convert results to tables; column names are averaging names
         colNames = fieldnames(errorsArrayTarget{1}.(paramName));
