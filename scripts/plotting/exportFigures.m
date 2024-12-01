@@ -9,6 +9,13 @@
 % Project Name: Unit Averaging for Heterogeneous Panels
 % Authors: Christian Brownlees, Vladislav Morozov
 %
+% This file is organized in sections 
+% 1. Main text plots 
+% This sections generates the plots of the first two figures of section 4
+% Fig 1. Relative MSE (lambda; all N; T=30,60, 600)
+% Fig 2. Example bias and variance for  single value of (N, T)
+% Fig 3. Average own weight (lambda; N=50,150; T = 60,600)
+% 
 % ===========================================================
 
 %% Initialization of plotting
@@ -26,21 +33,16 @@ setPlottingParameters
 
 % Load line plots
 chooseLinePlots
-
-%% Main Text Plots
-% This sections generates the plots of the first two figures of section 4
-% Fig 1. Relative MSE (lambda; all N; T=30,60, 600)
-% Fig 2. Example bias and variance for  single value of (N, T)
-% Fig 3. Average own weight (lambda; N=50,150; T = 60,600)
+   
+%% Main Text Plots: MSE and average first weight
 
 % Set line plots to use lines for the paper
 linePlots = changeLinesToPlot(linePlots, approachesToPlotMSEPaper);
 
-% Parameter to report in the main text
+% Main text: report the results only for lambda_1
 parID = 1;
 
-% Block 1: figures 1 and 3
-% Plot matrices to generate for the main text
+% IDs of plots to create in this plot
 textPlotIDs = {1, 5};
 
 % Values of N and T to use
@@ -55,10 +57,10 @@ textPlotSavingSize{1} = [0 0 12 11]*0.9;
 textPlotSavingSize{2} = [0 0 22 10]*0.5;
 
 % Upper margin
-textPlotUpperMargin{1} = 0.02;
+textPlotUpperMargin{1} = 0.12;
 textPlotUpperMargin{2} = 0.16;
 
-% Create plots
+% Loop through plots to be created 
 for textPlotID = 1:length(textPlotIDs)
     % Extract plot ID and value of (N, T) to use
     plotID = textPlotIDs{textPlotID};
@@ -79,7 +81,7 @@ for textPlotID = 1:length(textPlotIDs)
     % Create figure
     if plotQuietly ~= 1
         figure('Renderer', 'painters', ...
-            'Position', [50 50 1900 1200]);
+            'Position', [50 50 1900 1200]); %#ok<*FGREN>
     else
         figure('visible','off',...
             'Renderer', 'painters',...
@@ -90,9 +92,11 @@ for textPlotID = 1:length(textPlotIDs)
     [ha, ~] = tight_subplot(numTPlot,numNPlot, ...
         [.052 .023],[.07 textPlotUpperMargin{textPlotID}],[.05 .01]);
     
-    % Loop over N and T included in this plot
+    % Initialize counters for values of (N, T)
     tPlotID = 0;
     nPlotID = 0;
+
+    % Loop over N and T included in this plot
     for tID = 1:numT % T indexes rows
         
         % Skip iteration is current value of T is not required
@@ -206,200 +210,50 @@ for textPlotID = 1:length(textPlotIDs)
             ttl.Position(1) = 0;
             ttl.HorizontalAlignment = 'left';
             
-            % x axis labels only on the bottom
+            % Add x axis labels only on the bottom
             if tID == numT
                 xlabel('$\lambda_1$')
                 ha(plotNum).XTickLabel = ha(plotNum).XTick;
             end
-            % y axis labels only on the left
+
+            % Add y axis labels only on the left
             if nID == 1
                 yTicks = determineTicks(yLims, 4, 10);
                 ha(plotNum).YTick = yTicks;
                 ha(plotNum).YTickLabel = yTicks;
             end
-            % Enforce same ticks as in first column
+
+            % Enforce same y-axis ticks on all plots
             ha(plotNum).YTick = yTicks;
         end
     end
     
-    % Include suptitle
-    suptitle(plotDescrStruct.suptitle(paramArray{parID}.plotDescr))
+    % Add the suptitle to the plot
+    sgtitle(plotDescrStruct.suptitle(paramArray{parID}.plotDescr))
     
     % Add legend
     legend('Position', [0.83, 0.88, 0.1, 0.06]);
     
-    % Name for the saved figure
-    figureSavingName =  figureFolderName + "/BW" + ...
-        plotDescrStruct.plotSavingName + "_" + ...
-        simulationSetting+'_'+paramName +...
-        "_N" + titleN + ...
-        "_T" + titleT ;
+    % Create a name to the export the figure
+    figureSavingName =  makeFigureFileName(...
+        'BW', simulationSetting, ...
+        plotDescrStruct.plotSavingName, paramName, ...
+        valuesN, valuesT);
     
-    % Save both EPS and PNG versions
-    set(gcf, 'PaperPosition', textPlotSavingSize{textPlotID})
-    print(gcf, figureSavingName, '-depsc' );
+    % Save the figure in PNG 
     print(gcf, figureSavingName, '-dpng', '-r300' );
+
+    % Save the figure in PDF
+    set(gcf,'Units','Inches');
+    pos = get(gcf,'Position');
+    set(gcf,'PaperPositionMode','Auto',...
+        'PaperUnits','Inches',...
+            'PaperSize',[pos(3), pos(4)])
+    print(gcf, figureSavingName, '-dpdf' );
 end
 
-%% Experimental BW bias and variance plot
-% Parameter to report in the main text
-
-nIDs = [2 2, 3, 3];
-tIDs = [1 2 1 2 ];
-
-% Create figure
-if plotQuietly ~= 1
-    figure('Renderer', 'painters', ...
-        'Position', [50 50 1200 800]);
-else
-    figure('visible','off',...
-        'Renderer', 'painters',...
-        'Position', [50 50 plotWLines plotHLines]);
-end
-
-% Create tight axes
-[ha, pos] = tight_subplot(2, 2, ...
-    [.04 .04],[.07 0.08],[.05 .01]);
-
-% plotID 3 and 4 correspond to bias and variance
-for plotNum = 1:4
-    nID = nIDs(plotNum); %
-    tID = tIDs(plotNum); % T=60
-    % Axes ID to use
-    plotID = 3+(mod(plotNum, 2)==0);
-    axes(ha(plotNum)) %, 'Parent', p);
-    
-    % Extract description of the plot
-    plotDescrStruct = linePlots{plotID};
-    
-    % Extract the approaches for this plot
-    approachesToPlot = plotDescrStruct.approachesToPlot;
-    
-    % Extract data
-    currentParTable = plotDescrStruct.data{nID, tID}.(paramName);
-    
-    % Extract approaches present in this table
-    approachesPresent = currentParTable.Properties.VariableNames;
-    
-    % Extract number of approaches
-    numApproaches = size(currentParTable, 2);
-    
-    % Plot
-    hold(ha(plotNum), 'on');
-    % Loop through the columns of the currentParTable
-    for approachID = plotDescrStruct.firstColumnPlot:numApproaches
-        
-        % Get approach short name
-        approachShortName = string(approachesPresent{approachID});
-        
-        % Check if approach is present in the list of
-        % approaches to plot
-        approachPresent = ismember(approachShortName ,approachesToPlot);
-        % Skip if this approach was not available or not required
-        if ~approachPresent
-            continue
-        end
-        
-        % Find coordinate of current column/approach in the
-        % description of the approaches
-        approachCoord = findApproach(allMethodsArray, ...
-            approachShortName);
-        % Extract approach struct
-        approach = allMethodsArray{approachCoord};
-        % Obtain name
-        approachName = approachPlotName(approach, ...
-            approachPaperRenames, ...
-            approachShortName);
-        
-        % Obtain data to plot according to the descriptions of the
-        % plot
-        currentLineData = ...
-            plotDescrStruct.dataTransform(...
-            currentParTable, approachID);
-        
-        % Interpolate data between markers
-        dataInterp = ...
-            interp1(theta1Range, currentLineData, ...
-            thetaGridMSE, 'spline');
-        
-        % Plot the smoothed data line
-        hL1 = plot(thetaGridMSE, dataInterp, ...
-            'LineStyle', approach.lineStyle, ...
-            'LineWidth', plotLineThickness + ...
-            1*(approachName=="Individual"), ...
-            'Color', approach.colorBW);
-        hL1.HandleVisibility = 'off';
-        
-        % Add the markers
-        hL2 =  plot(theta1Range, currentLineData, ...
-            'LineStyle', 'none', ...
-            'Marker', approach.marker, ...
-            'MarkerSize', approach.markerSize, ...
-            'Color', [0,0,0],... %approach.colorBW, ...
-            'DisplayName', approachName);
-        hL2.HandleVisibility = 'off';
-        
-        % Dummy line with both markers and line, for legend
-        hLDummy = plot(2, 2, ...
-            'LineStyle', approach.lineStyle, ...
-            'LineWidth', plotLineThickness, ...
-            'Marker', approach.marker, ...
-            'Color', approach.colorBW, ...
-            'DisplayName', approachName);
-        
-        
-    end
-    % Set limits for axes
-    xlim([min(theta1Range), max(theta1Range)])
-    yLims = plotDescrStruct.yLims(currentParTable, paramName);
-    ylim(yLims)
-    
-    % Add vertical line if appropriate
-    if plotDescrStruct.relative
-        hV = yline(1);
-        hV.HandleVisibility='off';
-    end
-    
-    % Add special titles
-    if plotID == 3
-        ttl = title("Bias");
-    elseif plotID == 4
-        ttl = title("Variance relative to individual estimator");
-    end
-    % Left-justify the title
-    ttl.Units = 'Normalize';
-    ttl.Position(1) = 0;
-    ttl.HorizontalAlignment = 'left';
-    
-    % Add x label and x ticks
-    xlabel('$\lambda_1$')
-    ha(plotNum).XTickLabel = ha(plotNum).XTick;
-    
-    % Determine y ticks separately for each plot
-    yTicks = determineTicks(yLims, 3, 10);
-    ha(plotNum).YTick = yTicks;
-    ha(plotNum).YTickLabel = yTicks;
-    
-    % Add legend on the bias pane (to include ind estimator)
-    if plotNum ==1
-        legend('Position', [0.34, 0.76, 0.1, 0.06]);
-    end
-end
-
-% Name for the saved figure
-figureSavingName =  figureFolderName + "/BW" + ...
-    "bias_variance_2" + "_" + ...
-    simulationSetting+'_'+paramName +...
-    "_N_150" + ...
-    "_T_60" ;
-
-% Save both EPS and JPG versions
-set(gcf, 'PaperPosition', [0, 0, 13, 4]*0.8)
-print(gcf, figureSavingName, '-depsc' );
-print(gcf, figureSavingName, '-dpng', '-r300' );
-
-
-%% Block 2: figure 2
+%% Main Text Plots: Combined Bias-Variance plot
+ 
 % Set value of (N, T) to use
 nID = 2; % N=150
 tID = 2; % T=60
@@ -1004,7 +858,7 @@ for plotID = 1:length(gridPlots)
     end
 end
 
-%% Functions used for plotting in this script
+%% Auxiliary functions
 % Functions used
 % 1. findApproach -- finding coordinate of approach using its name
 % 2. order -- computes order of number
@@ -1013,120 +867,234 @@ end
 
 
 function approachPos = findApproach(methodsArray, approachToFindShortName)
-% findApproach Finds the cooordinate of an averaging approach using its
-% short name
-% Args:
-%       1. methodsArray -- cell array of structs. Each struct is an
-%       averaging approach with a .shortName field
-%       2. approachToFindShortName -- string, short name of the approach to
-%       find.
+% findApproach Finds the index of an averaging approach by its short name.
 %
-% Outputs:
-%       1. approachPos -- integer or NaN. If approach in the methodsArray,
-%       then returns the index of the (first matching) approach. If
-%       approach not in the array, returns NaN.
+% This function searches through a cell array of structs (`methodsArray`)
+% to locate an averaging approach whose `shortName` field matches the
+% specified string (`approachToFindShortName`). If found, it returns the
+% index of the first match. If no match is found, it returns NaN.
+%
+% Args:
+%     methodsArray (cell array of structs): 
+%         Each struct represents an averaging approach and must have a 
+%         `.shortName` field containing the short name of the approach.
+%     approachToFindShortName (string): 
+%         The short name of the approach to find.
+%
+% Returns:
+%     approachPos (integer or NaN): 
+%         The index of the first matching approach in `methodsArray`. 
+%         Returns NaN if no match is found.
 
-% Default output: NaN
+% Initialize the output to NaN
 approachPos = NaN;
 
-% Loop through approaches
+% Loop through each approach in the methods array
 for approachIdx = 1:length(methodsArray)
-    % If shortName matches the target, set the output and finish the search
-    if methodsArray{approachIdx}.shortName == approachToFindShortName
+    % Compare the shortName field with the target name
+    if strcmp(methodsArray{approachIdx}.shortName, approachToFindShortName)
+        % If a match is found, assign the index and exit the loop
         approachPos = approachIdx;
-        break
+        break;
     end
-    
 end
 end
 
 
 function n = order(val, base)
-% order Order of magnitude of number for specified base. Default base is 10
-% order(0.002) will return -3., order(1.3e6) will return 6. 
+% order Computes the order of magnitude of a number for a specified base.
+%
+% This function determines the order of magnitude of a given number `val` 
+% with respect to a specified arithmetic base. If the base is not provided, 
+% it defaults to 10. For example, the order of magnitude for 0.002 in base 
+% 10 is -3, and for 1.3e6, it is 6.
+%
+% Args:
+%     val (float): 
+%         The number for which the order of magnitude is to be determined. 
+%         Must be a non-zero value.
+%     base (integer, optional): 
+%         The base for the logarithmic computation. Defaults to 10 if not 
+%         specified.
+%
+% Returns:
+%     n (integer): 
+%         The order of magnitude of `val` in the given `base`.
+
+% Check if the base is provided, else default to base 10
 if nargin < 2
     base = 10;
 end
-n = floor(log(abs(val))./log(base));
+
+% Compute the order of magnitude using the logarithm and floor functions
+n = floor(log(abs(val)) / log(base));
 end
 
 
 function ticks = determineTicks(yLims, minTicks, maxTicks)
-% determineTicks Determines the ticks for the plots of this script.
+% determineTicks Generates a vector of tick marks for axis scaling.
+%
+% This function calculates a suitable set of tick marks for a plot axis 
+% based on given limits (`yLims`), while ensuring the number of ticks 
+% falls within a specified range (`minTicks` to `maxTicks`). The ticks 
+% are spaced logarithmically or linearly based on the scale of the input.
 %
 % Args:
-%       1. yLims -- 2 vector of limits for the axis
-%       2. minTicks -- integer, optional, default value 2. Minimum number
-%                      of ticks
-%       3. maxTicks -- integer, optional, default value 7. Maximum number
-%                      of ticks
-% Outputs:
-%       1. ticks -- a vector of length between minTicks and maxTicks.
-%                   Contains ticks ordered tick values
+%     yLims (vector of 2 floats): 
+%         The axis limits [min, max], where `yLims(1)` is the lower limit 
+%         and `yLims(2)` is the upper limit of the axis.
+%     minTicks (integer, optional): 
+%         Minimum number of ticks to generate. Defaults to 2.
+%     maxTicks (integer, optional): 
+%         Maximum number of ticks to generate. Defaults to 7.
+%
+% Returns:
+%     ticks (vector): 
+%         A vector of tick values, ordered from the lower to the upper axis . 
+%         limit. The number of ticks is guaranteed to be between 
+%         `minTicks` and `maxTicks`.
 
-% Set default values
-if nargin<2
+% Set default values for optional arguments
+if nargin < 2
     minTicks = 2;
+end
+if nargin < 3
     maxTicks = 7;
 end
 
-% Extract scale of axis to creat steps
-scale = order(yLims(2))-1;
+% Determine the scale of the axis to calculate tick step size
+scale = order(yLims(2)) - 1; 
 
-% Set endpoints for ticks
-low = round(yLims(1),-(scale));
-high = yLims(2);
+% Round the lower limit to the nearest step based on scale
+low = round(yLims(1), -scale);
+high = yLims(2); % Upper limit remains unchanged
 
-% Try setting the number of ticks by default
-c = 1;
-ticks = low:(c*10^scale):high;
+% Initialize step multiplier and generate initial tick vector
+c = 1; 
+ticks = low:(c * 10^scale):high;
 
-% Increase or decrease the number of ticks until producing a valit output
-while length(ticks)> maxTicks || length(ticks)<minTicks
-    % Too long: increase coarseness
-    if length(ticks)> maxTicks
-        c = 2*c;
-        % Too short: use finer steps
+% Adjust the step size iteratively to ensure the number of ticks is valid
+while length(ticks) > maxTicks || length(ticks) < minTicks
+    if length(ticks) > maxTicks
+        % Reduce the number of ticks by increasing step size
+        c = 2 * c;
     else
-        c = 0.5*c;
+        % Increase the number of ticks by reducing step size
+        c = 0.5 * c;
     end
-    % Compute ticks with new step
-    ticks = low:(c*10^scale):high;
+    % Recompute the tick vector with the adjusted step size
+    ticks = low:(c * 10^scale):high;
 end
 end
 
 
-function plotName = approachPlotName(...
-    approach, ...
-    approachRenames, ...
-    approachShortName)
-% approachPlotName Returns the plotting name for a given approach. If
-% approach is in approachRenames, the renamed name will be used. Otherwise
-% defauts to the longName in approach
+function plotName = ...
+    approachPlotName(approach, approachRenames, approachShortName)
+% approachPlotName Determines the display name for a given approach.
+%
+% This function returns the appropriate name to be used in plots for an 
+% averaging approach. If the `approachShortName` is found in the 
+% `approachRenames` struct, the corresponding renamed value is used. 
+% Otherwise, the `longName` field from the `approach` struct is returned.
 %
 % Args:
-%   1. approach -- struct with field .longName
-%   2. approachRenames -- struct. Field names are approach short names,
-%      values are names to display
-%   3. approachShortName -- string
+%     approach (struct): 
+%         A struct representing an approach, which must include a 
+%         `longName` field  containing its default name.
+%     approachRenames (struct): 
+%         A struct where field names are short names of approaches, and  
+%         their values are the custom names to be used in plots.
+%     approachShortName (string): 
+%         The short name of the approach for which the plot name is 
+%         required.
+% Returns:
+%     plotName (string): 
+%         The name to be displayed in the plot, which is either:
+%         - The custom name from `approachRenames` (if available), or
+%         - The `longName` field from the `approach` struct.
 %
-% Outputs:
-%   1. plotName -- either name in approachRenames or the longName from
-%                  approach
 
-% If approach is to be renamed, use the new name
+% Check if a custom name is defined in `approachRenames` for the short name
 if isfield(approachRenames, approachShortName)
+    % Use the custom name from approachRenames
     plotName = approachRenames.(approachShortName);
 else
+    % Fallback to the default long name from the approach struct
     plotName = approach.longName;
 end
 end
 
 
-function linePlots = changeLinesToPlot(linePlots, linesToPlot)
-% changeLinesToPlot Replaces the .approachesToPlot field in every member of
-% linePlots with linesToPlot
-for plotID = 1:length(linePlots)
-    linePlots{plotID}.approachesToPlot = linesToPlot;
+function plotArray = changeLinesToPlot(plotArray, linesToPlot)
+% changeLinesToPlot Updates the plotting configuration with a new set of
+% unit averaging approaches.
+%
+% This function modifies the `.approachesToPlot` field in each element of 
+% the `plotArray` to include the provided `linesToPlot`. This is useful for
+% dynamically changing the lines or methods that appear in plots.
+%
+% Args:
+%     plotArray (cell array): A cell array of structs, where each struct 
+%         represents a plot description and includes an `.approachesToPlot`
+%         field.
+%     linesToPlot (cell array of strings): A vector of strings specifying 
+%         the short names of the unit averaging approaches to include in 
+%         the plots.
+%
+% Returns:
+%     plotArray (cell array): The updated plot descriptions with modified 
+%         `.approachesToPlot` fields reflecting the new `linesToPlot`
+%         configuration.
+
+% Iterate through each plot configuration in the input array
+for plotID = 1:length(plotArray)
+    % Update the `approachesToPlot` field with the provided `linesToPlot`
+    plotArray{plotID}.approachesToPlot = linesToPlot;
 end
+end
+
+
+function figureSavingName = makeFigureFileName(...
+    leadingString, simulationSetting, ...
+    plotSavingName, paramName, ...
+    valuesN, valuesT)
+    % makeFigureFileName Generates a standardized figure name for exporting
+    % figure
+    %
+    % Args:
+    %     leadingString (string): String to insert at the beginning of the
+    %         file name.
+    %     simulationSetting (string): Name of the data-generating process.
+    %     
+    %     valuesN (vector): Vector of cross-sectional sizes used.
+    %     valuesT (vector): Vector of time series sizes used.
+    %
+    % Returns:
+    %     figureSavingName (str): Constructed file name including all  
+    %         parameters, saved in the 'results/simulation' folder. Format:
+    %         'results/figures/[leadingString][plotSavingName]_...
+    %         [simulationSetting]_[paramName]_N-[valuesN]_T-[valuesT]'
+    
+    % Numbers of dimensions of samples drawn
+    numT = length(valuesT);
+    numN = length(valuesN);
+
+    % Generate parts of the title that depend on (N, T)
+    titleN = "";
+    for nID=1:numN
+        titleN = titleN + "-" + valuesN(nID) ;
+    end
+
+    titleT = "";
+    for tID=1:numT
+        titleT = titleT + "-" + valuesT(tID);
+    end
+    
+    % Create figure title
+    figureSavingName = sprintf('results/figures/%s%s_%s_%s_N%s_T%s', ...
+        leadingString, ...          % Insert the leading string
+        plotSavingName, ...         % Plot name
+        simulationSetting, ...      % Simulation context
+        paramName, ...              % Parameter name
+        titleN, titleT);            % Sample sizes and cross-sections 
 end
