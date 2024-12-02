@@ -19,7 +19,10 @@ plotHLines = 800;           % Height in figure pixels
 
 % Grid of points for line plots. Markers will be placed at positions
 % theta1Range only
-thetaGridMSE = min(theta1Range):0.01:max(theta1Range);
+gridMultiplier = 3;  
+thetaGridMSE = ...
+    linspace(min(theta1Range), max(theta1Range), ...
+             gridMultiplier*length(theta1Range));
 
 % Axis plotting limits
 yLimsRelMSE.lambda = [0.5, 1.3];     % for the AR(1) parameter
