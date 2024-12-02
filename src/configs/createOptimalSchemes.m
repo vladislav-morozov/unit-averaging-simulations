@@ -62,6 +62,7 @@ for targetID = 1:numTargets
         @(weightVector, paramFun) true(numUnits, 1);
 end
 optimalSchemes{1}.color =   [0, 0, 255]/255;  
+optimalSchemes{1}.colorAnimated =   [0, 0, 255]/255;  
 optimalSchemes{1}.colorBW = [0.3, 0.3, 0.3];
 optimalSchemes{1}.lineStyle = '-';
 optimalSchemes{1}.marker = 'o';

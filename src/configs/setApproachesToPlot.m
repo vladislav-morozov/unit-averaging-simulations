@@ -65,6 +65,7 @@ approachesAlt = [ "unrestr","focus_oracle_10_pct",...
     "top_10_pct", "focus_cluster_4"];
 approachesAlt2 =  [ "unrestr","focus_oracle_50_pct",...
     "top_10_pct", "focus_cluster_2"];
+approachesToPlotAnimated = ["ind", "mg", "unrestr"];
 
 %% Patching names of plotted approaches
 
@@ -132,6 +133,7 @@ plotName{7} = "comp_focus_oracle";
 lineSets{8} = approachesAlt2;
 nameSets{8} = approachGridRenames;
 plotName{8} = "diff_lines";
+
 
 %% Extract the approaches that were computed with the current settings
 

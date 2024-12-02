@@ -1,4 +1,5 @@
 # Ignore everything in this directory
 *
-# Except this gitignore
+# Except this gitignore and the animated file
 !.gitignore
+!animated_simplified_results.gif

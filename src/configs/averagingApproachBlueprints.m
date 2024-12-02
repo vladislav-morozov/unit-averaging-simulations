@@ -35,6 +35,7 @@ methodsArray{1}.longName = 'Individual';
 
 % Plotting parameters for individual estimator
 methodsArray{1}.color = [0.01, 0.01, 0.05];
+methodsArray{1}.colorAnimated = [0.01, 0.01, 0.05];
 methodsArray{1}.colorBW = [0.01, 0.01, 0.01];
 methodsArray{1}.lineStyle = '-';
 methodsArray{1}.marker = 'none';
@@ -54,6 +55,7 @@ methodsArray{2}.longName = 'Mean Group';
 % Plotting parameters for mean group estimator
 methodsArray{2}.color = [0.7, 0.7, 0.7];
 methodsArray{2}.colorBW = [0.79, 0.79, 0.75];
+methodsArray{2}.colorAnimated = [0.7, 0.7, 0.7];
 methodsArray{2}.lineStyle = '-.';
 methodsArray{2}.marker = 'none';
 methodsArray{2}.markerSize = 6;

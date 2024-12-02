@@ -21,7 +21,9 @@
 %      function of own parameter value and target parameter value;
 %      probability of being unrestricted as a function of own and target
 %      value.
-% 
+%  IV. An animated plot for discussing results informally. Combines
+%      information on the MSE, bias, and variance.
+%
 % Created figures are saved in the 'results/figures/' folder.
 % ===========================================================
 
@@ -70,7 +72,7 @@ textPlotSavingSize{2} = [0 0 22 10]*0.5;
 textPlotUpperMargin{1} = 0.12;
 textPlotUpperMargin{2} = 0.16;
 
-% Loop through plots to be created 
+% Loop through the plots to be created 
 for textPlotID = 1:length(textPlotIDs)
     % Extract plot ID and value of (N, T) to use
     plotID = textPlotIDs{textPlotID};
@@ -286,7 +288,7 @@ end
 for plotID = 3:4
     % Axes ID to use
     plotNum = plotID-2;
-    axes(ha(plotNum)) %, 'Parent', p);
+    axes(ha(plotNum))  
     
     % Extract description of the plot
     plotDescrStruct = linePlots{plotID};
@@ -728,6 +730,291 @@ for plotID = 1:length(gridPlots)
         print(gcf, figureSavingName, '-dpdf' );
     end
 end
+
+%% Animated plot for discussing the simulation results
+
+% Report animation for the AR(1) parameter
+parID = 1;
+
+% Set line plots to use lines for the animated plot
+linePlots = changeLinesToPlot(linePlots, approachesToPlotAnimated);
+
+% Report plots for MSE, bias, variance
+plotCoords = [1, 3, 4];
+
+% Sample sizes reported: (N, T) = (150, 60)
+nID = 2;
+tID = 2;
+
+% Create figure
+if plotQuietly ~= 1
+    figure('Renderer', 'painters', ...
+        'Position', [50 50 1200 420]); %#ok<*FGREN>
+else
+    figure('visible','off',...
+        'Renderer', 'painters',...
+        'Position', [50 50 plotWLines plotHLines]);
+end
+
+% Set figure background to white 
+set(gcf, 'Color', 'w');  
+
+% Create tight axes using above parameters
+[ha, ~] = tight_subplot(1,3, ...
+    [.052 .053],[.09 0.12],[.05 .01]);
+
+% Create arrays for plot data. These will be used in the dynamic component
+hLines = cell(3, 1);
+hMarkers = cell(3, 1);
+dataInterp = cell(3, 1);
+currentLineData = cell(3, 1);
+
+% Plot the static background
+for plotID = 1 : 3
+    % Extract the kind of plot desired
+    plotKind = plotCoords(plotID);
+
+    % Extract description of the plot
+    plotDescrStruct = linePlots{plotKind};
+
+    % Extract the short names of the approaches for this plot
+    approachesToPlot = plotDescrStruct.approachesToPlot;
+
+    % Obtain parameter name
+    paramName = paramArray{parID}.saveName;
+    % Extract data
+    currentParTable = plotDescrStruct.data{nID, tID}.(paramName);
+
+    % Extract approaches present in this table
+    approachesPresent = currentParTable.Properties.VariableNames;
+
+    % Extract number of approaches
+    numApproaches = size(currentParTable, 2);
+
+    % Switch axes
+    axes(ha(plotID))
+
+    % Set hold on
+    hold(ha(plotID), 'on');
+
+    % Add a box for nicer visuals
+    box on
+
+    % Statically add the individual and the mean group estimators
+    % Also add an empty line for the fixed-N estimator so that it appears
+    % on the legend.
+    for approachID = ...
+            plotDescrStruct.firstColumnPlot : length(approachesToPlot) 
+
+        % Extract current approach
+        approachShortName = approachesToPlot(approachID);
+
+        % Find coordinate of current column/approach in the
+        % description of the approaches
+        approachCoord = findApproach(allMethodsArray, ...
+            approachShortName);
+        approachColumnID = ...
+            find(string(currentParTable.Properties.VariableNames) == ...
+            approachShortName);
+
+        % Extract approach struct
+        approach = allMethodsArray{approachCoord};
+
+        % Obtain name
+        approachName = approachPlotName(approach, ...
+            approachPaperRenames, ...
+            approachShortName);
+
+        % Obtain data to plot according to the descriptions of the
+        % plot
+        currentLineData{plotID} = ...
+            plotDescrStruct.dataTransform(...
+            currentParTable, approachColumnID);
+
+        % Smooth out the mean group line
+        dataInterp{plotID} = ...
+            interp1(theta1Range, currentLineData{plotID}, ...
+            thetaGridMSE, 'spline');
+        
+        % Fixed-N: only dummy data at this stage
+        if approachID == 3 
+            dataLine = nan(length(thetaGridMSE), 1);
+            dataMarker = nan(length(theta1Range), 1);
+            plotLineThickness = 1.6;
+        else
+            % Other approaches: full data
+            dataLine = dataInterp{plotID};
+            dataMarker = currentLineData{plotID};
+            plotLineThickness = 0.8;
+        end    
+        
+        % Plot the smoothed out line
+        hLines{plotID} = plot(thetaGridMSE, dataLine, ...
+            'LineStyle', approach.lineStyle, ...
+            'LineWidth', plotLineThickness, ...
+            'Color', approach.colorAnimated);
+        hLines{plotID}.HandleVisibility = 'off';
+
+        % Add the markers
+        hMarkers{plotID} =  plot(theta1Range, dataMarker, ...
+            'LineStyle', 'none', ...
+            'Marker', approach.marker, ...
+            'MarkerSize', approach.markerSize, ...
+            'Color', [0,0,0],... %approach.colorBW, ...
+            'DisplayName', approachName);
+        hMarkers{plotID}.HandleVisibility = 'off';
+
+        % Dummy line with both line and markers for the legend
+        hLDummy = plot(2, 2, ...
+            'LineStyle', approach.lineStyle, ...
+            'LineWidth', plotLineThickness, ...
+            'Marker', approach.marker, ...
+            'Color', approach.colorAnimated, ...
+            'DisplayName', approachName);
+        
+ 
+    end
+
+    % Set limits for axes
+    xlim([min(theta1Range), max(theta1Range)])
+    yLims = plotDescrStruct.yLims(currentParTable, paramName);
+    ylim(yLims)
+
+    % Add vertical line if plot is relative
+    if plotDescrStruct.relative
+        hV = yline(1);
+        hV.HandleVisibility='off';
+    end
+
+    % Add a title and left-justify it
+    switch plotID 
+        case 1
+            ttl = title('MSE relative to no averaging');
+        case 2
+            ttl = title('Bias');
+        case 3
+            ttl = title('Variance relative to no averaging');
+    end 
+    ttl.Units = 'Normalize';
+    ttl.Position(1) = 0;
+    ttl.HorizontalAlignment = 'left';
+
+    % Add x-axis labels
+    xlabel('Parameter space')
+    ha(plotID).XTickLabel = ha(plotID).XTick;
+     
+    % Add y-ticks
+    yTicks = determineTicks(yLims, 4, 10);
+    ha(plotID).YTick = yTicks;
+    ha(plotID).YTickLabel = yTicks;
+
+    % Add legend based on the bias plot
+    if plotID == 2
+        legend(["No averaging", "Equal weights", "Optimal weights"]);
+    end 
+
+    % Add suptitle
+    sgtitle('Optimal unit averaging leads to lower MSE and better bias-variance trade-off')
+end
+
+% Dynamically draw the fixed-N estimator
+% Set the number of frames (drawing-pause-delete)
+pauseFrames = gridMultiplier * 4;  
+totalFrames = length(thetaGridMSE) + pauseFrames + length(thetaGridMSE);
+
+% Initialize an array to store frames
+frames = [];
+
+% Animation loop
+for i = 1:totalFrames
+    if i <= length(thetaGridMSE)
+        % Drawing phase
+
+        % Extend lines
+        set(hLines{1}, 'XData', thetaGridMSE(1:i), ...
+            'YData', dataInterp{1}(1:i))
+        set(hLines{2}, 'XData', thetaGridMSE(1:i), ...
+            'YData', dataInterp{2}(1:i))
+        set(hLines{3}, 'XData', thetaGridMSE(1:i), ...
+            'YData', dataInterp{3}(1:i)) 
+
+        % Handle adding markers when the line gets to them
+        if rem(i-gridMultiplier, gridMultiplier) == 0
+            markID = 1+(i-gridMultiplier)/gridMultiplier;
+            set(hMarkers{1}, 'XData', theta1Range(1:markID), ...
+                'YData',  currentLineData{1}(1:markID));
+            set(hMarkers{2}, 'XData', theta1Range(1:markID), ...
+                'YData',  currentLineData{2}(1:markID));
+            set(hMarkers{3}, 'XData', theta1Range(1:markID), ...
+                'YData',  currentLineData{3}(1:markID));
+              
+        end
+
+    elseif i <= length(thetaGridMSE) + pauseFrames  
+        % Do nothing, just hold the current state    
+
+    else
+        % Deletion phase
+
+        % Rescale the current position being erased
+        eraseIndex =  i-length(thetaGridMSE) - pauseFrames;
+        
+        % Clear lines
+        set(hLines{1}, 'XData', thetaGridMSE(eraseIndex:end), ...
+            'YData', dataInterp{1}(eraseIndex:end))
+        set(hLines{2}, 'XData', thetaGridMSE(eraseIndex:end), ...
+            'YData', dataInterp{2}(eraseIndex:end))
+        set(hLines{3}, 'XData', thetaGridMSE(eraseIndex:end), ...
+            'YData', dataInterp{3}(eraseIndex:end))
+        
+        % Clean up markers
+        if rem(eraseIndex, gridMultiplier) == 0
+            markID = (eraseIndex+gridMultiplier)/gridMultiplier;
+            set(hMarkers{1}, 'XData', theta1Range(markID:end), ...
+                'YData',  currentLineData{1}(markID:end));
+            set(hMarkers{2}, 'XData', theta1Range(markID:end), ...
+                'YData',  currentLineData{2}(markID:end));
+            set(hMarkers{3}, 'XData', theta1Range(markID:end), ...
+                'YData',  currentLineData{3}(markID:end));
+              
+        end
+
+        % Clean up the plot on the last frame
+        if i == totalFrames
+            set(hLines{1}, 'XData', NaN, 'YData', NaN)
+            set(hLines{2}, 'XData', NaN, 'YData', NaN)
+            set(hLines{3}, 'XData', NaN, 'YData', NaN)
+            set(hMarkers{1}, 'XData', NaN, 'YData', NaN)
+            set(hMarkers{2}, 'XData', NaN, 'YData', NaN)
+            set(hMarkers{3}, 'XData', NaN, 'YData', NaN)
+        end
+    end
+    drawnow; 
+    
+    % Capture the frame
+    frame = getframe(gcf);
+    frames = [frames; frame];
+end
+
+drawSpeed = 0.034; % Speed of drawing the line 
+eraseSpeed = 0.02;
+% Write frames to GIF
+filename = 'results/figures/animated_simplified_results.gif';
+for k = 1:length(frames)
+    im = frame2im(frames(k));
+    [imind, cm] = rgb2ind(im, 256);
+    if k == 1
+        imwrite(imind, cm, filename, 'gif', 'Loopcount', inf, ...
+            'DelayTime', drawSpeed);
+    elseif k <= length(thetaGridMSE) + pauseFrames
+        imwrite(imind, cm, filename, 'gif', 'WriteMode', 'append', ...
+            'DelayTime', drawSpeed);
+    else
+        imwrite(imind, cm, filename, 'gif', 'WriteMode', 'append', ...
+            'DelayTime', eraseSpeed);
+    end
+end
+
 
 %% Finish export
 
